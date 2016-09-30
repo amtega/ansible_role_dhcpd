@@ -1,0 +1,5 @@
+---
+# Role dependencies
+
+dependencies:
+  - { role: enterprise_linux }
