@@ -1,2 +1,4 @@
 ---
 # Role variables
+
+dhcpd_include_files_dir: /etc/dhcp/dhcpd.d

@@ -1,62 +1,10 @@
 ---
 # Role tasks
 
-#
-# Install tasks
-#
-
 - block:
 
-  #
-  # Install required packages
-  #
+  - include: install.yml
+  - include: configure.yml
+  - include: service.yml
 
-  - name: install packages needed
-    yum: name=dhcp state=present
-
-  #
-  # Create required directories
-  #
-
-  - name: create required directories
-    file: path=/etc/dhcp/dhcpd.d state=directory owner=root group=root mode=0755
-
-  tags: install
-
-#
-# Configuration tasks
-#
-
-- block:
-
-  #
-  # Setup config files
-  #
-
-  - name: configure /etc/dhcp/dhcpd.conf
-    template: src=dhcpd.template.j2 dest=/etc/dhcp/dhcpd.conf owner=root group=root mode=0644 backup=yes
-
-  - name: configure dhcpd subnets
-    template: src=subnet.template.j2 dest=/etc/dhcp/dhcpd.d/{{ item.subnet }}.conf owner=root group=root mode=0644 backup=yes
-    with_items: "{{ dhcpd_subnets }}"
-
-  - name: configure dhcpd static addresses
-    template: src=static.template.j2 dest=/etc/dhcp/dhcpd.d/{{ item.hostname }}.conf owner=root group=root mode=0644 backup=yes
-    with_items: "{{ dhcpd_static_addresses }}"
-
-  tags: configure
-
-#
-# Service tasks
-#
-
-# - block:
-#
-#   #
-#   # Enable services
-#   #
-#
-#   - name: enable and start dhcpd service
-#     service: name=dhcpd state=started enabled=yes
-#
-#   tags: service
+  when: "not dhcpd_client_only"

@@ -10,7 +10,7 @@ subnet {{ item.subnet }} netmask {{ item.netmask }} {
     option domain-name-servers {{ item.dns_servers | join(" ") }};
 {% endif %}
 {% if item.netmask is defined %}
-    option item-mask           {{ item.netmask }};
+    option subnet-mask         {{ item.netmask }};
 {% endif %}
 {% if item.range_start is defined %}
     range dynamic-bootp        {{ item.range_start }} {{ item.range_end }};

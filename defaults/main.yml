@@ -1,9 +1,7 @@
 ---
 # Role default lower priority variables
 
-#
 # List of dhcpd subnets
-#
 
 # Format of the list items:
 #
@@ -36,9 +34,8 @@
 
 dhcpd_subnets:
 
-#
+
 # List of static addresses
-#
 
 #
 # Format of the list items:
@@ -54,3 +51,13 @@ dhcpd_subnets:
 #   ipv4_address: 192.168.13.120
 
 dhcpd_static_addresses:
+
+# Indicate that the role will be used from a dhcp client and not to management
+# a dhcp server.
+
+dhcpd_client_only: false
+
+# Is this role is used as dchpd client only this variable indicates the remote
+# dhcp server to operate
+
+dhcpd_remote_server: "{ inventory_hostname }"

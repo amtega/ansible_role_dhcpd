@@ -1,2 +1,11 @@
 ---
 # Role handlers
+
+# This handlers are intended to allow other roles add/remove additional static
+# adddresses to a remote dhcpd server without having the dhcpd role
+
+- name: dhcpd add static address
+  include: static_add.yml
+
+- name: dhcpd remove static address
+  include: static_remove.yml
