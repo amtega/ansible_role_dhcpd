@@ -1,0 +1,41 @@
+---
+# Configuration tasks block
+
+- block:
+
+  - name: configure dhcpd subnets
+    template:
+      src: subnet.template.j2
+      dest: "{{ dhcpd_include_files_dir }}/{{ item.subnet }}.conf"
+      owner: root
+      group: root
+      mode: 0644
+      backup: yes
+    with_items: "{{ dhcpd_subnets }}"
+    register: configure_dhcpd_subnets_result
+    when: "not dhcpd_client_only"
+
+  - name: search include files
+    find: paths="{{ dhcpd_include_files_dir }}" patterns="*.conf"
+    register: get_includes_result
+    delegate_to: "{{ dhcpd_remote_server }}"
+
+  - name: create main configuration file
+    template:
+      src: dhcpd.template.j2
+      dest: /etc/dhcp/dhcpd.conf
+      owner: root
+      group: root
+      mode: 0644
+      backup: yes
+    register: create_main_config_result
+    delegate_to: "{{ dhcpd_remote_server }}"
+
+  - name: restart dhcpd service
+    service: name=dhcpd state=started enabled=yes
+    delegate_to: "{{ dhcpd_remote_server }}"
+    when: >
+      configure_dhcpd_subnets_result.changed
+      or create_main_config_result.changed
+
+  tags: configure

@@ -1,0 +1,15 @@
+---
+# Task to add static adddresses in a remote dhcpd server
+
+- name: add static addresses
+  template:
+    src: static.template.j2
+    dest: "{{ dhcpd_include_files_dir }}/{{ item.hostname }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  with_items: "{{ dhcpd_static_addresses }}"
+  delegate_to: "{{ dhcpd_remote_server }}"
+
+- include: configure.yml

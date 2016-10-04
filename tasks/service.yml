@@ -1,0 +1,9 @@
+---
+# Service tasks block
+
+- block:
+
+  - name: enable and start dhcpd service
+    service: name=dhcpd state=started enabled=yes
+
+  tags: service

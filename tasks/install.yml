@@ -1,0 +1,17 @@
+---
+# Install tasks block
+
+- block:
+
+  - name: install packages needed
+    yum: name=dhcp state=present
+
+  - name: create required directories
+    file:
+      path: "{{ dhcpd_include_files_dir }}"
+      state: directory
+      owner: root
+      group: root
+      mode: 0755
+
+  tags: install
