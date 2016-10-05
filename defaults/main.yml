@@ -60,4 +60,4 @@ dhcpd_client_only: false
 # Is this role is used as dchpd client only this variable indicates the remote
 # dhcp server to operate
 
-dhcpd_remote_server: "{ inventory_hostname }"
+dhcpd_remote_server: "{{ inventory_hostname }}"

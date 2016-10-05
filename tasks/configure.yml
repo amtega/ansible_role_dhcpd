@@ -32,7 +32,7 @@
     delegate_to: "{{ dhcpd_remote_server }}"
 
   - name: restart dhcpd service
-    service: name=dhcpd state=started enabled=yes
+    service: name=dhcpd state=restarted enabled=yes
     delegate_to: "{{ dhcpd_remote_server }}"
     when: >
       configure_dhcpd_subnets_result.changed
