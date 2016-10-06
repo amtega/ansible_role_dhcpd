@@ -3,48 +3,65 @@
 
 - block:
 
-  - name: search static dhcp addreses config files defined in other hosts
+  - name: search static
     set_fact:
-      files: >
-        {{ hostvars[item]['dhcpd_static_addresses']
-          | map(attribute='hostname')
-          | map('regex_replace', '$', '.conf') | list }}
+      dhcpd_external_static_addresses: >
+        {{ hostvars[item]['dhcpd_static_addresses'] | list }}
     when: "'dhcpd_static_addresses' in hostvars[item]"
     with_items: "{{ groups['all'] }}"
-    register: search_external_files_result
+    register: search_external_static_addresses_result
 
-  - name: setup a fact with all necessary external config files from other hosts
+  - name: setup a fact with all static addresses
     set_fact:
-      dhcpd_external_include_files: >
-        {{ search_external_files_result.results
+      dhcpd_all_static_addresses: >
+        {{ search_external_static_addresses_result.results
           | reject('skipped', 'defined')
           | map(attribute='ansible_facts')
-          | map(attribute='files')
+          | map(attribute='dhcpd_external_static_addresses')
           | sum(none, [])
-          | list }}
+          | list + dhcpd_static_addresses }}
 
-  - name: setup a fact with all necessary own include config files
+  - debug: var=dhcpd_all_static_addresses
+
+
+  # - name: search static dhcp addreses config files defined in other hosts
+  #   set_fact:
+  #     files: >
+  #       {{ hostvars[item]['dhcpd_static_addresses']
+  #         | map(attribute='hostname')
+  #         | map('regex_replace', '$', '.conf') | list }}
+  #   when: "'dhcpd_static_addresses' in hostvars[item]"
+  #   with_items: "{{ groups['all'] }}"
+  #   register: search_external_files_result
+
+  - name: setup a fact with all necessary static addresses include config files
     set_fact:
-      dhcpd_own_include_files: >
-       {{ dhcpd_subnets
+      dhcpd_static_include_files: >
+        {{ dhcpd_all_static_addresses
+          | map(attribute='hostname')
+          | map('regex_replace', '$', '.conf') | list }}
+
+  - debug: var=dhcpd_static_include_files
+
+  - name: setup a fact with all necessary subnet include config files
+    set_fact:
+      dhcpd_subnet_include_files: >
+        {{ dhcpd_subnets
           | map(attribute='subnet')
           | map('regex_replace', '$', '.conf')
-          | list
-          + dhcpd_static_addresses
-          | map(attribute='hostname')
-          | map('regex_replace', '$', '.conf')
           | list }}
+
+  - debug: var=dhcpd_subnet_include_files
 
   - name: setup a fact with all necessary include files
     set_fact:
       dhcpd_include_files: >
-        {{ dhcpd_external_include_files
-          + dhcpd_own_include_files }}
+        {{ dhcpd_static_include_files
+          + dhcpd_subnet_include_files }}
 
   - name: search include files that exists
     find: paths="{{ dhcpd_include_files_dir }}" patterns="*.conf"
     register: search_includes_result
-    delegate_to: "{{ dhcpd_remote_server }}"
 
   - name: delete not necessary include files
     file: path={{ item.path }} state=absent
@@ -72,7 +89,6 @@
       mode: 0644
       backup: yes
     register: create_main_config_result
-    delegate_to: "{{ dhcpd_remote_server }}"
 
   - name: restart dhcpd service
     service: name=dhcpd state=restarted enabled=yes
@@ -81,4 +97,5 @@
       configure_dhcpd_subnets_result.changed
       or create_main_config_result.changed
 
+  delegate_to: "{{ dhcpd_remote_server }}"
   tags: configure
