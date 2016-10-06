@@ -1,7 +1,5 @@
+{{ ansible_managed | comment }}
 #
-# {{ ansible_managed }}
-#
-
 ddns-update-style interim;
 
 allow booting;
@@ -12,6 +10,6 @@ set vendorclass = option vendor-class-identifier;
 
 option pxe-system-type code 93 = unsigned integer 16;
 
-{% for file in get_includes_result.files %}
-include "{{ file.path }}";
+{% for file in dhcpd_include_files %}
+include "{{ dhcpd_include_files_dir }}/{{ file }}";
 {% endfor %}
