@@ -37,18 +37,24 @@ dhcpd_subnets:
 
 # List of static addresses
 
-#
 # Format of the list items:
 #
 # - hostname: hostname
 #   mac: mac address
 #   ipv4_address: static ipv4 address
+#   managed: true or false (optional, by default true)
+#
+# The optional 'managed' attribute indicates if the dhcpd server must manage
+# the configuration file for the static address (true) or if the dhcp client
+# manages this config file using the specific handlers provided by the role
+# (false)
 #
 # Sample:
 #
 # - name: hostacme
 #   mac: c5:6f:75:cc:00:01
 #   ipv4_address: 192.168.13.120
+
 
 dhcpd_static_addresses:
 
@@ -60,4 +66,4 @@ dhcpd_client_only: false
 # Is this role is used as dchpd client only this variable indicates the remote
 # dhcp server to operate
 
-dhcpd_remote_server: "{{ inventory_hostname }}"
+dhcpd_server: "{{ inventory_hostname }}"

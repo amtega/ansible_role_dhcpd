@@ -1,6 +1,4 @@
-#
-# {{ ansible_managed }}
-#
+{{ ansible_managed | comment }}
 
 subnet {{ item.subnet }} netmask {{ item.netmask }} {
 {% if item.routers is defined %}

@@ -3,11 +3,14 @@
 
 - block:
 
-  - name: search static
+  - name: search static addresses defined in other hosts
     set_fact:
       dhcpd_external_static_addresses: >
         {{ hostvars[item]['dhcpd_static_addresses'] | list }}
-    when: "'dhcpd_static_addresses' in hostvars[item]"
+    when: >
+      'dhcpd_server' in hostvars[item]
+      and hostvars[item]['dhcpd_server'] == '{{ inventory_hostname }}'
+      and 'dhcpd_static_addresses' in hostvars[item]
     with_items: "{{ groups['all'] }}"
     register: search_external_static_addresses_result
 
@@ -19,20 +22,7 @@
           | map(attribute='ansible_facts')
           | map(attribute='dhcpd_external_static_addresses')
           | sum(none, [])
-          | list + dhcpd_static_addresses }}
-
-  - debug: var=dhcpd_all_static_addresses
-
-
-  # - name: search static dhcp addreses config files defined in other hosts
-  #   set_fact:
-  #     files: >
-  #       {{ hostvars[item]['dhcpd_static_addresses']
-  #         | map(attribute='hostname')
-  #         | map('regex_replace', '$', '.conf') | list }}
-  #   when: "'dhcpd_static_addresses' in hostvars[item]"
-  #   with_items: "{{ groups['all'] }}"
-  #   register: search_external_files_result
+          | list + dhcpd_static_addresses | default([]) }}
 
   - name: setup a fact with all necessary static addresses include config files
     set_fact:
@@ -40,8 +30,6 @@
         {{ dhcpd_all_static_addresses
           | map(attribute='hostname')
           | map('regex_replace', '$', '.conf') | list }}
-
-  - debug: var=dhcpd_static_include_files
 
   - name: setup a fact with all necessary subnet include config files
     set_fact:
@@ -51,17 +39,13 @@
           | map('regex_replace', '$', '.conf')
           | list }}
 
-  - debug: var=dhcpd_subnet_include_files
-
   - name: setup a fact with all necessary include files
     set_fact:
       dhcpd_include_files: >
         {{ dhcpd_static_include_files
           + dhcpd_subnet_include_files }}
 
-  - name: search include files that exists
-    find: paths="{{ dhcpd_include_files_dir }}" patterns="*.conf"
-    register: search_includes_result
+  - include: search_includes.yml
 
   - name: delete not necessary include files
     file: path={{ item.path }} state=absent
@@ -80,6 +64,25 @@
     register: configure_dhcpd_subnets_result
     when: "not dhcpd_client_only"
 
+  - name: configure static addresses
+    template:
+      src: static.template.j2
+      dest: "{{ dhcpd_include_files_dir }}/{{ item.hostname }}.conf"
+      owner: root
+      group: root
+      mode: 0644
+      backup: yes
+    when: "{{ item.managed | default(true) }}"
+    with_items: "{{ dhcpd_all_static_addresses }}"
+    register: configure_static_addresses_result
+
+  - include: search_includes.yml
+
+  - name: setup a fact with all remaining include files
+    set_fact:
+      dhcpd_include_files: >
+        {{ search_includes_result.files | map(attribute='path') | list }}
+
   - name: create main configuration file
     template:
       src: dhcpd.template.j2
@@ -92,10 +95,11 @@
 
   - name: restart dhcpd service
     service: name=dhcpd state=restarted enabled=yes
-    delegate_to: "{{ dhcpd_remote_server }}"
+    delegate_to: "{{ dhcpd_server }}"
     when: >
-      configure_dhcpd_subnets_result.changed
-      or create_main_config_result.changed
+      {{ configure_dhcpd_subnets_result.changed }}
+      or {{ create_main_config_result.changed }}
+      or {{ configure_static_addresses_result.changed }}
 
-  delegate_to: "{{ dhcpd_remote_server }}"
+  delegate_to: "{{ dhcpd_server }}"
   tags: configure

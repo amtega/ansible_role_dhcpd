@@ -10,6 +10,4 @@
     mode: 0644
     backup: yes
   with_items: "{{ dhcpd_static_addresses }}"
-  delegate_to: "{{ dhcpd_remote_server }}"
-
-- include: configure.yml
+  delegate_to: "{{ dhcpd_server }}"

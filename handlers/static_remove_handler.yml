@@ -1,0 +1,6 @@
+---
+# This handler is intended to allow other roles remove additional static
+# adddresses in a remote dhcpd server without having the full dhcpd role
+
+- include: static_remove.yml
+- include: configure.yml

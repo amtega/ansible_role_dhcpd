@@ -1,0 +1,6 @@
+---
+# Task to search include files that exist
+
+- name: search include files that exists
+  find: paths="{{ dhcpd_include_files_dir }}" patterns="*.conf"
+  register: search_includes_result

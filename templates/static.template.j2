@@ -1,6 +1,4 @@
-#
-# {{ ansible_managed }}
-#
+{{ ansible_managed | comment }}
 
 host {{ item.hostname }} {
     hardware ethernet {{ item.mac }};
