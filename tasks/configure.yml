@@ -50,7 +50,7 @@
   - name: delete not necessary include files
     file: path={{ item.path }} state=absent
     when: "'{{ item.path | basename }}' not in dhcpd_include_files"
-    with_items: "{{ search_includes_result.files }}"
+    with_items: "{{ search_includes_result.files | default([]) }}"
 
   - name: configure dhcpd subnets
     template:
@@ -73,7 +73,7 @@
       mode: 0644
       backup: yes
     when: "{{ item.managed | default(true) }}"
-    with_items: "{{ dhcpd_all_static_addresses }}"
+    with_items: "{{ dhcpd_all_static_addresses | default([]) }}"
     register: configure_static_addresses_result
 
   - include: search_includes.yml
@@ -95,7 +95,6 @@
 
   - name: restart dhcpd service
     service: name=dhcpd state=restarted enabled=yes
-    delegate_to: "{{ dhcpd_server }}"
     when: >
       {{ configure_dhcpd_subnets_result.changed }}
       or {{ create_main_config_result.changed }}
