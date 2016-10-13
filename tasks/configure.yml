@@ -13,6 +13,7 @@
       and 'dhcpd_static_addresses' in hostvars[item]
     with_items: "{{ groups['all'] }}"
     register: search_external_static_addresses_result
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: setup a fact with all static addresses
     set_fact:
@@ -23,13 +24,15 @@
           | map(attribute='dhcpd_external_static_addresses')
           | sum(none, [])
           | list + dhcpd_static_addresses | default([]) }}
+    delegate_to: "{{ dhcpd_server }}"
 
-  - name: setup a fact with all necessary static addresses include config files
+  - name: setup a fact with all static addresses include config files
     set_fact:
       dhcpd_static_include_files: >
         {{ dhcpd_all_static_addresses
           | map(attribute='hostname')
           | map('regex_replace', '$', '.conf') | list }}
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: setup a fact with all necessary subnet include config files
     set_fact:
@@ -38,12 +41,14 @@
           | map(attribute='subnet')
           | map('regex_replace', '$', '.conf')
           | list }}
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: setup a fact with all necessary include files
     set_fact:
       dhcpd_include_files: >
         {{ dhcpd_static_include_files
           + dhcpd_subnet_include_files }}
+    delegate_to: "{{ dhcpd_server }}"
 
   - include: search_includes.yml
 
@@ -51,6 +56,7 @@
     file: path={{ item.path }} state=absent
     when: "'{{ item.path | basename }}' not in dhcpd_include_files"
     with_items: "{{ search_includes_result.files | default([]) }}"
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: configure dhcpd subnets
     template:
@@ -63,6 +69,7 @@
     with_items: "{{ dhcpd_subnets }}"
     register: configure_dhcpd_subnets_result
     when: "not dhcpd_client_only"
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: configure static addresses
     template:
@@ -75,6 +82,7 @@
     when: "{{ item.managed | default(true) }}"
     with_items: "{{ dhcpd_all_static_addresses | default([]) }}"
     register: configure_static_addresses_result
+    delegate_to: "{{ dhcpd_server }}"
 
   - include: search_includes.yml
 
@@ -82,6 +90,7 @@
     set_fact:
       dhcpd_include_files: >
         {{ search_includes_result.files | map(attribute='path') | list }}
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: create main configuration file
     template:
@@ -92,6 +101,7 @@
       mode: 0644
       backup: yes
     register: create_main_config_result
+    delegate_to: "{{ dhcpd_server }}"
 
   - name: restart dhcpd service
     service: name=dhcpd state=restarted enabled=yes
@@ -99,6 +109,6 @@
       {{ configure_dhcpd_subnets_result.changed }}
       or {{ create_main_config_result.changed }}
       or {{ configure_static_addresses_result.changed }}
+    delegate_to: "{{ dhcpd_server }}"
 
-  delegate_to: "{{ dhcpd_server }}"
   tags: configure
