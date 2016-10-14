@@ -63,7 +63,7 @@ dhcpd_static_addresses:
 
 dhcpd_client_only: false
 
-# Is this role is used as dchpd client only this variable indicates the remote
-# dhcp server to operate
+# If this role is used as dchpd client only this variable indicates the remote
+# dhcp server to operate. In other case must point to the dhcp server itself
 
 dhcpd_server: "{{ inventory_hostname }}"

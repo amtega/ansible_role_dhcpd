@@ -1,5 +1,5 @@
 ---
-# Task to remove static adddresses in a remote dhcpd server
+# Task to remove static adddresses
 
 - name: remove static address
   file:

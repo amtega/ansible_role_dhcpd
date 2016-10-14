@@ -1,5 +1,5 @@
 ---
-# Task to add static adddresses in a remote dhcpd server
+# Task to add static adddresses
 
 - name: add static addresses
   template:
