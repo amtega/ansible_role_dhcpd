@@ -1,0 +1,19 @@
+---
+# This handler is intended to allow other roles add temporary static
+# adddresses in a remote dhcpd server without having the full dhcpd role
+#
+# To use this handler setup a fact called dhcpd_temporary_static_addresses with
+# the same format of dhcpd_static_addresses role variable.
+
+- name: add temporary static addresses
+  template:
+    src: static.template.j2
+    dest: "{{ dhcpd_include_files_dir }}/tmp/{{ item.hostname }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  with_items: "{{ dhcpd_temporary_static_addresses }}"
+  delegate_to: "{{ dhcpd_server }}"
+
+- include: configure.yml

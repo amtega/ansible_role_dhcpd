@@ -1,0 +1,6 @@
+---
+# Restart the dhcpd server
+
+- name: restart service
+  service: name=dhcpd state=restarted enabled=yes
+  delegate_to: "{{ dhcpd_server }}"

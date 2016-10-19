@@ -1,9 +1,0 @@
----
-# Task to remove static adddresses
-
-- name: remove static address
-  file:
-    path: "{{ dhcpd_include_files_dir }}/{{ item.hostname }}.conf"
-    state: absent
-  with_items: "{{ dhcpd_static_addresses }}"
-  delegate_to: "{{ dhcpd_server | default(inventory_hostname) }}"

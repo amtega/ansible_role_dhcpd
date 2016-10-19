@@ -1,6 +1,0 @@
----
-# This handler is intended to allow other roles add additional static
-# adddresses in a remote dhcpd server without having the full dhcpd role
-
-- include: static_add.yml
-- include: configure.yml

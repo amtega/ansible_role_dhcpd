@@ -8,10 +8,13 @@
 
   - name: create required directories
     file:
-      path: "{{ dhcpd_include_files_dir }}"
+      path: "{{ item }}"
       state: directory
       owner: root
       group: root
       mode: 0755
+    with_items:
+      - "{{ dhcpd_include_files_dir }}"
+      - "{{ dhcpd_include_files_dir }}/tmp"
 
   tags: install
