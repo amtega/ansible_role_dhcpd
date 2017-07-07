@@ -2,5 +2,10 @@
 # Service tasks
 
 - name: enable and start dhcpd service
-  service: name=dhcpd state=started enabled=yes
-  tags: service
+  service:
+    name: dhcpd
+    state: started
+    enabled: yes
+  tags:
+    - role::dhcpd
+    - role::dhcpd::service

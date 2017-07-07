@@ -1,11 +1,13 @@
 ---
 # Role handlers
 
-- name: dhcpd add temporary static addresses
-  include: static_add_temporary.yml
-
-- name: dhcpd remove temporary static addresses
-  include: static_remove_temporary.yml
-
-- name: dhcpd restart
-  include: restart.yml
+- name: restart service
+  service:
+    name: dhcpd
+    state: restarted
+    enabled: yes
+  listen:
+    - dhcpd restart
+  tags:
+    - role::dhcpd
+    - role::dhcpd::service

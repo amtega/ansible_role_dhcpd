@@ -3,10 +3,17 @@
 
 - block:
 
-  - name: install packages needed
-    yum: name=dhcp state=present
+  - name: install dhcpd packages
+    package:
+      name: "{{ item }}"
+      state: present
+    with_items: "{{ dhcpd_packages | default([]) }}"
+    tags:
+      - role::dhcpd
+      - role::dhcpd::packages
+      - role::dhcpd::install
 
-  - name: create required directories
+  - name: create dhcpd required directories
     file:
       path: "{{ item }}"
       state: directory
@@ -14,7 +21,8 @@
       group: root
       mode: 0755
     with_items:
-      - "{{ dhcpd_include_files_dir }}"
-      - "{{ dhcpd_include_files_dir }}/tmp"
-
-  tags: install
+      - "{{ dhcpd_subnets_include_dir }}"
+      - "{{ dhcpd_static_include_dir }}"
+    tags:
+      - role::dhcpd
+      - role::dhcpd::install

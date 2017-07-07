@@ -1,5 +1,24 @@
 ---
 # Role dependencies
 
-dependencies:
-  - { role: enterprise_linux }
+---
+galaxy_info:
+  author: Juan Antonio Valiño García
+  description: Setup docker engine
+  company: Amtega - Xunta de Galicia
+  license: license not defined
+  min_ansible_version: 2.3
+  platforms:
+  - name: Fedora
+    versions:
+    - 25
+  - name: EL
+    versions:
+    - 6
+    - 7
+  galaxy_tags:
+    - system
+    - dhcp
+    - dhcpd
+
+dependencies: []

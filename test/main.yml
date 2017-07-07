@@ -1,0 +1,99 @@
+---
+# Tasks for tesing role
+
+- name: run idempotence test
+  hosts: localhost
+  roles:
+    - role: docker_presets
+    - role: docker_sandbox
+      docker_sandbox_state: started
+      docker_sandbox_idempotence_test: false
+
+- name: create extra files for later testing
+  hosts: docker_sandbox_containers
+  tasks:
+    - name: create /etc/dhcpd/dhcpd.subnets.d/test file
+      copy:
+        src: /etc/issue
+        dest: /etc/dhcpd/dhcpd.subnets.d/test
+        force: no
+
+    - name: create /etc/dhcpd/dhcpd.static.d/test file
+      copy:
+        src: /etc/issue
+        dest: /etc/dhcpd/dhcpd.static.d/test
+        force: no
+
+- name: test dhcpd role
+  hosts: docker_sandbox_containers
+  vars:
+    dhcpd_subnets:
+     - subnet: "192.168.13.0"
+       netmask: "255.255.255.0"
+       routers: "192.168.13.1"
+       dns_servers:
+         - 192.168.13.2
+         - 192.168.13.3
+       range_start: 192.168.13.100
+       range_end: 192.168.13.120
+       default_lease_time: 21600
+       max_lease_time: 43200
+       next_server: 192.168.13.13
+       filename: "pxelinux.0"
+
+     - subnet: "192.168.14.0"
+       netmask: "255.255.255.0"
+       routers: "192.168.14.1"
+       dns_servers:
+         - 192.168.14.2
+         - 192.168.14.3
+       range_start: 192.168.14.100
+       range_end: 192.168.14.120
+       default_lease_time: 21600
+       max_lease_time: 43200
+       next_server: 192.168.14.13
+       filename: "pxelinux.0"
+
+     dhcpd_static_addresses:
+       - name: hostacme1
+         mac: c5:6f:75:cc:00:01
+         ipv4_address: 192.168.15.120
+
+       - name: hostacme2
+         mac: c5:6f:75:cc:00:02
+         ipv4_address: 192.168.15.121
+
+  roles:
+    - dhcpd
+
+  tasks:
+    - name: check dhcpd process is running
+      shell: ps aux | grep dhcpd | grep -v grep
+      changed_when: false
+      register: search_dhcpd_process_result
+      failed_when: search_dhcpd_process_result.rc != 0
+
+
+    # - name: test reload handler
+    #   copy:
+    #     src: /etc/issue
+    #     dest: /tmp/issue1
+    #     force: no
+    #   notify:
+    #     - xinetd reload
+    #
+    # - name: test restart handler
+    #   copy:
+    #     src: /etc/issue
+    #     dest: /tmp/issue2
+    #     force: no
+    #   notify:
+    #     - xinetd restart
+  # tags:
+  #   - idempotence
+
+- name: cleanup docker docker sandbox
+  hosts: localhost
+  roles:
+    - role: docker_sandbox
+      docker_sandbox_state: absent

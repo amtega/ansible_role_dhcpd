@@ -1,116 +1,66 @@
 ---
 # Configuration tasks
 
-# This tasks are desgined also to be called from another roles through the
-# provided handlers.  That's the reason of the extensive usage of delegate_to
-# and the lookup of variables using hostvars[host] syntax.
-
 - block:
-
-  # This task search all inventory for the definition of static dhcp adddresses
-  # asigned to the dhcpd server.
-
-  - name: search the inventory for static addresses
-    set_fact:
-      dhcpd_external_static_addresses: >
-        {{ hostvars[item]['dhcpd_static_addresses'] | list }}
-    when: >
-      'dhcpd_server' in hostvars[item]
-      and hostvars[item]['dhcpd_server'] == dhcpd_server
-      and 'dhcpd_static_addresses' in hostvars[item]
-    with_items: "{{ groups['all'] }}"
-    register: search_external_static_addresses_result
-    delegate_to: "{{ dhcpd_server }}"
-
-  # This task processes the result of the previous one to extract only the
-  # static addresses info
-
-  - name: setup a fact with all static addresses found in the inventory
-    set_fact:
-      dhcpd_all_static_addresses: >
-        {{ search_external_static_addresses_result.results
-          | reject('skipped', 'defined')
-          | map(attribute='ansible_facts')
-          | map(attribute='dhcpd_external_static_addresses')
-          | sum(none, [])
-          | list }}
-    delegate_to: "{{ dhcpd_server }}"
-
-  # This task build a list of the include file names associated to the static
-  # addresses gathered in the previous task.
-
-  - name: setup a fact with all static addresses include config files
-    set_fact:
-      dhcpd_static_include_files: >
-        {{ dhcpd_all_static_addresses
-          | map(attribute='hostname')
-          | map('regex_replace', '$', '.conf') | list }}
-    delegate_to: "{{ dhcpd_server }}"
-
-  # This task retrieves from the inventory the subnet definitions of this dhcpd
-  # server
 
   - name: setup a fact with all necessary subnet include config files
     set_fact:
-      dhcpd_subnet_include_files: >
-        {{ hostvars[dhcpd_server]['dhcpd_subnets']
+      dhcpd_subnet_include_files: >-
+        {{ dhcpd_subnets
           | map(attribute='subnet')
           | map('regex_replace', '$', '.conf')
           | list }}
-    delegate_to: "{{ dhcpd_server }}"
 
-  # This task builds a list with all the include files related to static
-  # addresses and the subnet definitions.
+  - name: setup a fact with all necessary static include config files
+    set_fact:
+      dhcpd_static_include_files: >-
+        {{ dhcpd_static
+          | map(attribute='name')
+          | map('regex_replace', '$', '.conf')
+          | list }}
 
   - name: setup a fact with all necessary include files
     set_fact:
-      dhcpd_include_files: >
+      dhcpd_include_files: >-
         {{ dhcpd_static_include_files
           + dhcpd_subnet_include_files }}
-    delegate_to: "{{ dhcpd_server }}"
 
-  # Call a task to search the include files present on the dhcp server
+  - name: search include files that already exists
+    find:
+      paths: "{{ item }}"
+      patterns: "*.conf"
+    with_items:
+      - "{{ dhcpd_subnets_include_dir }}"
+      - "{{ dhcpd_static_include_dir }}"
+    register: search_includes_result
 
-  - include: search_includes.yml
+  - name: delete unnecessary include files
+    file:
+      path: "{{ item.path }}"
+      state: absent
+    when: item.path | basename not in dhcpd_include_files
+    with_items: >-
+      {{ search_includes_result.results
+        | sum(attribute="files", start=[] )
+        | default([]) }}"
 
-  # Delete all include files not present in the list gathered previously
-
-  - name: delete not necessary include files
-    file: path={{ item.path }} state=absent
-    when: "'{{ item.path | basename }}' not in dhcpd_include_files"
-    with_items: "{{ search_includes_result.files | default([]) }}"
-    delegate_to: "{{ dhcpd_server }}"
-
-  # Delete all temporary include files older than 1h
-
-  - name: delete temporary include files older than 1h
-    file: path={{ item.path }} state=absent
-    with_items: "{{ search_old_temporary_includes_result.files | default([]) }}"
-    delegate_to: "{{ dhcpd_server }}"
-
-  # Create include files for subnets
-
-  - name: configure dhcpd subnets
+  - name: create configuration files for subnets
     template:
       src: subnet.template.j2
-      dest: "{{ dhcpd_include_files_dir }}/{{ item.subnet }}.conf"
+      dest: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
       owner: root
       group: root
       mode: 0644
       backup: no
     with_items: "{{ dhcpd_subnets }}"
     register: configure_dhcpd_subnets_result
-    when: "not dhcpd_client_only"
     notify:
       - dhcpd restart
-    delegate_to: "{{ dhcpd_server }}"
 
-  # Create include files for static addresses
-
-  - name: configure static addresses
+  - name: create configuration files for static addresses
     template:
       src: static.template.j2
-      dest: "{{ dhcpd_include_files_dir }}/{{ item.hostname }}.conf"
+      dest: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
       owner: root
       group: root
       mode: 0644
@@ -119,27 +69,8 @@
     register: configure_static_addresses_result
     notify:
       - dhcpd restart
-    delegate_to: "{{ dhcpd_server }}"
 
-  # Search again the include files present on the dhcp server to reflect in
-  # the fact the changes made by the previous tasks.
-
-  - include: search_includes.yml
-
-  # Buid a list with the paths of the include files present on server
-
-  - name: setup a fact with all remaining include files
-    set_fact:
-      dhcpd_include_files: >
-        {{ search_includes_result.files | map(attribute='path') | list
-          + search_temporary_includes_result.files
-            | map(attribute='path') | list  }}
-    delegate_to: "{{ dhcpd_server }}"
-
-  # Create the main dhcp config file including the include files configured
-  # in the previous tasks
-
-  - name: create main configuration file
+  - name: create dhcpd main configuration file
     template:
       src: dhcpd.template.j2
       dest: /etc/dhcp/dhcpd.conf
@@ -150,6 +81,7 @@
     register: create_main_config_result
     notify:
       - dhcpd restart
-    delegate_to: "{{ dhcpd_server }}"
 
-  tags: configure
+  tags:
+    - role::dhcpd
+    - role::dhcpd::configure

@@ -2,7 +2,7 @@
 # Role default lower priority variables
 
 # List of dhcpd subnets
-
+#
 # Format of the list items:
 #
 #  - subnet: dhcp network address in format a.b.c.d
@@ -35,9 +35,7 @@
 dhcpd_subnets:
 
 # List of static addresses
-# This addresses can be defined in the inventory of any host and the role
-# will take it and create the necessary files.
-
+#
 # Format of the list items:
 #
 # - hostname: hostname
@@ -50,14 +48,4 @@ dhcpd_subnets:
 #   mac: c5:6f:75:cc:00:01
 #   ipv4_address: 192.168.13.120
 
-dhcpd_static_addresses:
-
-# Indicate that the role will be used from a dhcp client and not to management
-# a dhcp server.
-
-dhcpd_client_only: false
-
-# If this role is used as dchpd client only this variable indicates the remote
-# dhcp server to operate. In other case must point to the dhcp server itself
-
-dhcpd_server: "{{ inventory_hostname }}"
+dhcpd_static:

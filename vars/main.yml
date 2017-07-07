@@ -1,4 +1,12 @@
 ---
 # Role variables
 
-dhcpd_include_files_dir: /etc/dhcp/dhcpd.d
+# Packages necesasry for dpchd service
+
+dhcpd_packages:
+  - dhcpd
+
+# Include dirs paths
+
+dhcpd_subnets_include_dir: /etc/dhcp/dhcpd.subnets.d
+dhcpd_static_include_dir: /etc/dhcp/dhcpd.subnets.d

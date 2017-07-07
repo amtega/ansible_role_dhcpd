@@ -1,10 +1,23 @@
 ---
 # Role tasks
 
-- block:
+- name: install dhcpd
+  include: install.yml
+  static: false
+  tags:
+    - role::dhcpd
+    - role::dhcpd::install
 
-  - include: install.yml
-  - include: configure.yml
-  - include: service.yml
+- name: configure dhcpd
+  include: configure.yml
+  static: false
+  tags:
+    - role::dhcpd
+    - role::dhcpd::configure
 
-  when: "not dhcpd_client_only"
+- name: setup dhcpd service
+  include: service.yml
+  static: false
+  tags:
+    - role::dhcpd
+    - role::dhcpd::service
