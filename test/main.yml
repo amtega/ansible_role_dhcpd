@@ -9,25 +9,20 @@
       docker_sandbox_state: started
       docker_sandbox_idempotence_test: false
 
-- name: create extra files for later testing
-  hosts: docker_sandbox_containers
-  tasks:
-    - name: create /etc/dhcpd/dhcpd.subnets.d/test file
-      copy:
-        src: /etc/issue
-        dest: /etc/dhcpd/dhcpd.subnets.d/test
-        force: no
-
-    - name: create /etc/dhcpd/dhcpd.static.d/test file
-      copy:
-        src: /etc/issue
-        dest: /etc/dhcpd/dhcpd.static.d/test
-        force: no
-
 - name: test dhcpd role
   hosts: docker_sandbox_containers
   vars:
     dhcpd_subnets:
+      - subnet: >-
+          {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network'] }}
+        netmask: >-
+          {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['netmask'] }}
+        dns_servers:
+          - 192.168.13.2
+          - 192.168.13.3
+        default_lease_time: 21600
+        max_lease_time: 43200
+
      - subnet: "192.168.13.0"
        netmask: "255.255.255.0"
        routers: "192.168.13.1"
@@ -54,14 +49,14 @@
        next_server: 192.168.14.13
        filename: "pxelinux.0"
 
-     dhcpd_static_addresses:
-       - name: hostacme1
-         mac: c5:6f:75:cc:00:01
-         ipv4_address: 192.168.15.120
+    dhcpd_static_addresses:
+     - name: hostacme1
+       mac: c5:6f:75:cc:00:01
+       ipv4_address: 192.168.15.120
 
-       - name: hostacme2
-         mac: c5:6f:75:cc:00:02
-         ipv4_address: 192.168.15.121
+     - name: hostacme2
+       mac: c5:6f:75:cc:00:02
+       ipv4_address: 192.168.15.121
 
   roles:
     - dhcpd
@@ -73,6 +68,21 @@
       register: search_dhcpd_process_result
       failed_when: search_dhcpd_process_result.rc != 0
 
+    - name: check /etc/dhcp/dhcpd.subnets.d/192.168.13.0.conf file
+      stat:
+        path: /etc/dhcp/dhcpd.subnets.d/192.168.13.0.conf
+      register: check_subnet1_result
+
+    - name: check /etc/dhcp/dhcpd.subnets.d/192.168.14.0.conf file
+      stat:
+        path: /etc/dhcp/dhcpd.subnets.d/192.168.14.0.conf
+      register: check_subnet2_result
+
+    - name: check testing subnets config files exist
+      assert:
+        that:
+          - check_subnet1_result.stat.exists
+          - check_subnet2_result.stat.exists
 
     # - name: test reload handler
     #   copy:
@@ -91,6 +101,22 @@
     #     - xinetd restart
   # tags:
   #   - idempotence
+
+
+- name: create unamanged files for later testing
+  hosts: docker_sandbox_containers
+  tasks:
+    - name: create /etc/dhcpd/dhcpd.subnets.d/test file
+      copy:
+        src: /etc/issue
+        dest: /etc/dhcpd/dhcpd.subnets.d/test
+        force: no
+
+    - name: create /etc/dhcpd/dhcpd.static.d/test file
+      copy:
+        src: /etc/issue
+        dest: /etc/dhcpd/dhcpd.static.d/test
+        force: no
 
 - name: cleanup docker docker sandbox
   hosts: localhost

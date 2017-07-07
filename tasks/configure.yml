@@ -8,6 +8,7 @@
       dhcpd_subnet_include_files: >-
         {{ dhcpd_subnets
           | map(attribute='subnet')
+          | map('regex_replace', '^', dhcpd_subnets_include_dir + "/")
           | map('regex_replace', '$', '.conf')
           | list }}
 
@@ -16,6 +17,7 @@
       dhcpd_static_include_files: >-
         {{ dhcpd_static
           | map(attribute='name')
+          | map('regex_replace', '^', dhcpd_static_include_dir + "/")
           | map('regex_replace', '$', '.conf')
           | list }}
 
@@ -38,11 +40,12 @@
     file:
       path: "{{ item.path }}"
       state: absent
-    when: item.path | basename not in dhcpd_include_files
+    when:
+      - item.path | basename not in dhcpd_include_files
     with_items: >-
       {{ search_includes_result.results
         | sum(attribute="files", start=[] )
-        | default([]) }}"
+        | default([]) }}
 
   - name: create configuration files for subnets
     template:
