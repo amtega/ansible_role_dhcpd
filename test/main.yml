@@ -7,60 +7,133 @@
     - role: docker_presets
     - role: docker_sandbox
       docker_sandbox_state: started
-      docker_sandbox_idempotence_test: false
 
-- name: test dhcpd role
+- name: setup dhcpd config facts
   hosts: docker_sandbox_containers
-  vars:
-    dhcpd_subnets:
-      - subnet: >-
-          {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network'] }}
-        netmask: >-
-          {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['netmask'] }}
-        dns_servers:
-          - 192.168.13.2
-          - 192.168.13.3
-        default_lease_time: 21600
-        max_lease_time: 43200
+  tasks:
+    - name: setup a fact with eth0 config
+      set_fact:
+        eth0_config: >-
+          {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4'] }}
 
-     - subnet: "192.168.13.0"
-       netmask: "255.255.255.0"
-       routers: "192.168.13.1"
-       dns_servers:
-         - 192.168.13.2
-         - 192.168.13.3
-       range_start: 192.168.13.100
-       range_end: 192.168.13.120
-       default_lease_time: 21600
-       max_lease_time: 43200
-       next_server: 192.168.13.13
-       filename: "pxelinux.0"
+    - name: setup dhcpd subnets config fact
+      set_fact:
+        dhcpd_subnets:
+          - subnet: "{{ eth0_config['network'] }}"
+            netmask: "{{ eth0_config['netmask'] }}"
+            state: present
 
-     - subnet: "192.168.14.0"
-       netmask: "255.255.255.0"
-       routers: "192.168.14.1"
-       dns_servers:
-         - 192.168.14.2
-         - 192.168.14.3
-       range_start: 192.168.14.100
-       range_end: 192.168.14.120
-       default_lease_time: 21600
-       max_lease_time: 43200
-       next_server: 192.168.14.13
-       filename: "pxelinux.0"
+          - subnet: "192.168.13.0"
+            netmask: "255.255.255.0"
+            state: present
+            routers: "192.168.13.1"
+            dns_servers:
+             - 192.168.13.2
+             - 192.168.13.3
+            range_start: 192.168.13.100
+            range_end: 192.168.13.120
+            default_lease_time: 21600
+            max_lease_time: 43200
+            next_server: 192.168.13.13
+            filename: "pxelinux.0"
 
-    dhcpd_static_addresses:
-     - name: hostacme1
-       mac: c5:6f:75:cc:00:01
-       ipv4_address: 192.168.15.120
+          - subnet: "192.168.14.0"
+            netmask: "255.255.255.0"
+            state: present
+            routers: "192.168.14.1"
+            dns_servers:
+             - 192.168.14.2
+             - 192.168.14.3
+            range_start: 192.168.14.100
+            range_end: 192.168.14.120
+            default_lease_time: 21600
+            max_lease_time: 43200
+            next_server: 192.168.14.13
+            filename: "pxelinux.0"
 
-     - name: hostacme2
-       mac: c5:6f:75:cc:00:02
-       ipv4_address: 192.168.15.121
+          - subnet: "192.168.15.0"
+            netmask: "255.255.255.0"
+            state: absent
+            routers: "192.168.15.1"
+            dns_servers:
+             - 192.168.15.2
+             - 192.168.15.3
+            range_start: 192.168.15.100
+            range_end: 192.168.15.120
+            default_lease_time: 21600
+            max_lease_time: 43200
+            next_server: 192.168.15.13
+            filename: "pxelinux.0"
 
+    - name: setup dhcpd static addresses config fact
+      set_fact:
+        dhcpd_static_addresses:
+         - hostname: hostacme1
+           mac: c5:6f:75:cc:00:01
+           ipv4_address: 192.168.15.120
+           state: present
+
+         - hostname: hostacme2
+           mac: c5:6f:75:cc:00:02
+           ipv4_address: 192.168.15.121
+           state: present
+
+         - hostname: hostacme3
+           mac: c5:6f:75:cc:00:02
+           ipv4_address: 192.168.15.121
+           state: absent
+
+  tags:
+    - idempotence
+
+- name: create some unamanaged files for later testing
+  hosts: docker_sandbox_containers
+  tasks:
+    - name: create testing required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - /etc/dhcpd/dhcpd.subnets.d
+        - /etc/dhcpd/dhcpd.static.d
+
+    - name: create /etc/dhcpd/dhcpd.subnets.d/test.conf file
+      copy:
+        src: /etc/issue
+        dest: "/etc/dhcpd/dhcpd.subnets.d/test.conf"
+        force: no
+
+    - name: create /etc/dhcpd/dhcpd.static.d/test.conf file
+      copy:
+         src: /etc/issue
+         dest: "/etc/dhcpd/dhcpd.static.d/test.conf"
+         force: no
+  tags:
+    - idempotence
+
+- name: create some fake configuration files for later testing
+  hosts: docker_sandbox_containers
+  tasks:
+    - name: create /etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf file
+      copy:
+        src: /etc/issue
+        dest: "/etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf"
+        force: no
+
+    - name: create /etc/dhcpd/dhcpd.static.d/hostacme3.conf file
+      copy:
+        src: /etc/issue
+        dest: "/etc/dhcpd/dhcpd.static.d/hostacme3.conf"
+        force: no
+
+- name: test dhcpd role with unamanged files deletion disabled
+  hosts: docker_sandbox_containers
   roles:
-    - dhcpd
-
+    - role: dhcpd
+      dhcpd_delete_unamanaged: false
   tasks:
     - name: check dhcpd process is running
       shell: ps aux | grep dhcpd | grep -v grep
@@ -68,55 +141,103 @@
       register: search_dhcpd_process_result
       failed_when: search_dhcpd_process_result.rc != 0
 
-    - name: check /etc/dhcp/dhcpd.subnets.d/192.168.13.0.conf file
+    - name: >-
+        check {{ dhcpd_subnets_include_dir
+            + '/'
+            + hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network']
+            + '.conf' + ' file' }}
       stat:
-        path: /etc/dhcp/dhcpd.subnets.d/192.168.13.0.conf
+        path: >-
+          {{ dhcpd_subnets_include_dir
+            + "/"
+            + hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network']
+            + ".conf" }}
       register: check_subnet1_result
 
-    - name: check /etc/dhcp/dhcpd.subnets.d/192.168.14.0.conf file
+    - name: check /etc/dhcpd/dhcpd.subnets.d/192.168.13.0.conf file
       stat:
-        path: /etc/dhcp/dhcpd.subnets.d/192.168.14.0.conf
+        path: "/etc/dhcpd/dhcpd.subnets.d/192.168.13.0.conf"
       register: check_subnet2_result
+
+    - name: check /etc/dhcpd/dhcpd.subnets.d/192.168.14.0.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.subnets.d/192.168.14.0.conf"
+      register: check_subnet3_result
+
+    - name: check /etc/dhcpd/dhcpd.static.d/hostacme1.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.static.d/hostacme1.conf"
+      register: check_static1_result
+
+    - name: check /etc/dhcpd/dhcpd.static.d/hostacme2.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.static.d/hostacme2.conf"
+      register: check_static2_result
+
+    - name: check absent /etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf"
+      register: check_absent1_result
+
+    - name: check absent /etc/dhcpd/dhcpd.static.d/hostacme3.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.static.d/hostacme3.conf"
+      register: check_absent2_result
+
+    - name: check unamanged /etc/dhcpd/dhcpd.subnets.d/test.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.subnets.d/test.conf"
+      register: check_unamanaged1_result
+
+    - name: check unamanged /etc/dhcpd/dhcpd.static.d/test.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.static.d/test.conf"
+      register: check_unamanaged2_result
 
     - name: check testing subnets config files exist
       assert:
         that:
           - check_subnet1_result.stat.exists
           - check_subnet2_result.stat.exists
+          - check_subnet3_result.stat.exists
+          - check_static1_result.stat.exists
+          - check_static2_result.stat.exists
+          - not check_absent1_result.stat.exists
+          - not check_absent2_result.stat.exists
+          - check_unamanaged1_result.stat.exists
+          - check_unamanaged2_result.stat.exists
 
-    # - name: test reload handler
-    #   copy:
-    #     src: /etc/issue
-    #     dest: /tmp/issue1
-    #     force: no
-    #   notify:
-    #     - xinetd reload
-    #
-    # - name: test restart handler
-    #   copy:
-    #     src: /etc/issue
-    #     dest: /tmp/issue2
-    #     force: no
-    #   notify:
-    #     - xinetd restart
-  # tags:
-  #   - idempotence
+    - name: test restart handler
+      copy:
+        src: /etc/issue
+        dest: /tmp/issue2
+        force: no
+      notify:
+        - dhcpd restart
+  tags:
+    - idempotence
 
-
-- name: create unamanged files for later testing
+- name: test dhcpd unamanged files deletion
   hosts: docker_sandbox_containers
+  roles:
+    - role: dhcpd
+      dhcpd_delete_unamanaged: true
   tasks:
-    - name: create /etc/dhcpd/dhcpd.subnets.d/test file
-      copy:
-        src: /etc/issue
-        dest: /etc/dhcpd/dhcpd.subnets.d/test
-        force: no
+    - name: check unamanged /etc/dhcpd/dhcpd.subnets.d/test.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.subnets.d/test.conf"
+      register: check_unamanaged1_result
 
-    - name: create /etc/dhcpd/dhcpd.static.d/test file
-      copy:
-        src: /etc/issue
-        dest: /etc/dhcpd/dhcpd.static.d/test
-        force: no
+    - name: check unamanged /etc/dhcpd/dhcpd.static.d/test.conf file
+      stat:
+        path: "/etc/dhcpd/dhcpd.static.d/test.conf"
+      register: check_unamanaged2_result
+
+    - name: check testing subnets config files exist
+      assert:
+        that:
+          - not check_unamanaged1_result.stat.exists
+          - not check_unamanaged2_result.stat.exists
 
 - name: cleanup docker docker sandbox
   hosts: localhost

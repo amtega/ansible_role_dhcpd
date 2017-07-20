@@ -8,5 +8,5 @@ dhcpd_packages:
 
 # Include dirs paths
 
-dhcpd_subnets_include_dir: /etc/dhcp/dhcpd.subnets.d
-dhcpd_static_include_dir: /etc/dhcp/dhcpd.static.d
+dhcpd_subnets_include_dir: /etc/dhcpd/dhcpd.subnets.d
+dhcpd_static_include_dir: /etc/dhcpd/dhcpd.static.d

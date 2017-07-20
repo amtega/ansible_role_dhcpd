@@ -7,6 +7,7 @@
     set_fact:
       dhcpd_subnet_include_files: >-
         {{ dhcpd_subnets
+          | selectattr('state', 'equalto', 'present')
           | map(attribute='subnet')
           | map('regex_replace', '^', dhcpd_subnets_include_dir + "/")
           | map('regex_replace', '$', '.conf')
@@ -16,6 +17,7 @@
     set_fact:
       dhcpd_static_include_files: >-
         {{ dhcpd_static
+          | selectattr('state', 'equalto', 'present')
           | map(attribute='name')
           | map('regex_replace', '^', dhcpd_static_include_dir + "/")
           | map('regex_replace', '$', '.conf')
@@ -27,26 +29,6 @@
         {{ dhcpd_static_include_files
           + dhcpd_subnet_include_files }}
 
-  - name: search include files that already exists
-    find:
-      paths: "{{ item }}"
-      patterns: "*.conf"
-    with_items:
-      - "{{ dhcpd_subnets_include_dir }}"
-      - "{{ dhcpd_static_include_dir }}"
-    register: search_includes_result
-
-  - name: delete unnecessary include files
-    file:
-      path: "{{ item.path }}"
-      state: absent
-    when:
-      - item.path | basename not in dhcpd_include_files
-    with_items: >-
-      {{ search_includes_result.results
-        | sum(attribute="files", start=[] )
-        | default([]) }}
-
   - name: create configuration files for subnets
     template:
       src: subnet.template.j2
@@ -55,8 +37,22 @@
       group: root
       mode: 0644
       backup: no
+    when: item.state == 'present'
     with_items: "{{ dhcpd_subnets }}"
+    loop_control:
+      label: "{{ item.subnet}} / {{ item.netmask }}"
     register: configure_dhcpd_subnets_result
+    notify:
+      - dhcpd restart
+
+  - name: remove configuration files for subnets marked as absent
+    file:
+      path: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
+      state: absent
+    when: item.state == 'absent'
+    with_items: "{{ dhcpd_subnets }}"
+    loop_control:
+      label: "{{ item.subnet}} / {{ item.netmask }}"
     notify:
       - dhcpd restart
 
@@ -68,10 +64,47 @@
       group: root
       mode: 0644
       backup: no
-    with_items: "{{ dhcpd_all_static_addresses | default([]) }}"
+    when: item.state == 'present'
+    with_items: "{{ dhcpd_static_addresses | default([]) }}"
+    loop_control:
+      label: "{{ item.hostname}} / {{ item.mac }}"
     register: configure_static_addresses_result
     notify:
       - dhcpd restart
+
+  - name: remove configuration files for static addresses marked as absent
+    file:
+      path: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
+      state: absent
+    when: item.state == 'absent'
+    with_items: "{{ dhcpd_static_addresses | default([]) }}"
+    loop_control:
+      label: "{{ item.hostname}} / {{ item.mac }}"
+    notify:
+      - dhcpd restart
+
+  - name: search include files that already exists
+    find:
+      paths: "{{ item }}"
+      patterns: "*.conf"
+    with_items:
+      - "{{ dhcpd_subnets_include_dir }}"
+      - "{{ dhcpd_static_include_dir }}"
+    register: search_includes_result
+
+  - name: delete unamanged include files
+    file:
+      path: "{{ item.path }}"
+      state: absent
+    when:
+      - dhcpd_delete_unamanaged
+      - item.path not in dhcpd_include_files
+    with_items: >-
+      {{ search_includes_result.results
+        | sum(attribute="files", start=[] )
+        | default([]) }}
+    loop_control:
+      label: "{{ item.path }}"
 
   - name: create dhcpd main configuration file
     template:
