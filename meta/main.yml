@@ -19,5 +19,3 @@ galaxy_info:
     - system
     - dhcp
     - dhcpd
-
-dependencies: []
