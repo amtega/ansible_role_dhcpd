@@ -7,3 +7,7 @@
 ## 2017-07-26
 
 - Splitted role into three ones (dhcpd, dhcpd_subnets and dhcpd_static)
+
+## 2017-07-28
+
+- Refactored all dhcpd into one role.

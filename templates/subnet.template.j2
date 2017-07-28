@@ -1,0 +1,28 @@
+{{ ansible_managed | comment }}
+
+subnet {{ item.subnet }} netmask {{ item.netmask }} {
+{% if item.routers is defined %}
+    option routers             {{ item.routers }};
+{% endif %}
+{% if item.dns_servers is defined %}
+    option domain-name-servers {{ item.dns_servers | join(", ") }};
+{% endif %}
+{% if item.netmask is defined %}
+    option subnet-mask         {{ item.netmask }};
+{% endif %}
+{% if item.range_start is defined %}
+    range dynamic-bootp        {{ item.range_start }} {{ item.range_end }};
+{% endif %}
+{% if item.default_lease_time is defined %}
+    default-lease-time         {{ item.default_lease_time }};
+{% endif %}
+{% if item.max_lease_time is defined %}
+    max-lease-time             {{ item.max_lease_time }};
+{% endif %}
+{% if item.filename is defined %}
+    filename                   "{{ item.filename }}";
+{% endif %}
+{% if item.next_server is defined %}
+    next-server                {{ item.next_server }};
+{% endif -%}
+}

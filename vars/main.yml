@@ -6,7 +6,14 @@
 dhcpd_packages:
   - dhcp
 
-# Include dirs paths
+# Include paths
 
-dhcpd_base_dir: /etc/dhcp/dhserver.d
-dhcpd_includes_file: "{{ dhcpd_base_dir }}/includes.conf"
+dhcpd_include_base_dir: /etc/dhcp/dhserver.d
+dhcpd_subnets_include_dir: "{{ dhcpd_include_base_dir }}/dhcpd.subnets.d"
+dhcpd_static_include_dir: "{{ dhcpd_include_base_dir }}/dhcpd.static.d"
+
+# Locking config
+
+dhcpd_lock_dir: /var/lock/dhcpd_static
+dhcpd_lock_retries: 300
+dhcpd_lock_delay: 1

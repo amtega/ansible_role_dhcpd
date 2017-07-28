@@ -1,0 +1,13 @@
+---
+# Create lock files
+
+- name: create lock dir on dhcpd server
+  shell: "mkdir {{ dhcpd_lock_dir }}"
+  args:
+    warn: false
+  register: dhcpd_lock_result
+  changed_when: dhcpd_lock_result.rc == 0
+  until: dhcpd_lock_result.rc == 0
+  retries: "{{ dhcpd_lock_retries }}"
+  delay: "{{ dhcpd_lock_delay }}"
+  delegate_to: "{{ dhcpd_server}}"

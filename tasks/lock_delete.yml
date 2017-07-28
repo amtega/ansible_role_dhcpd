@@ -1,0 +1,8 @@
+---
+# Delete lock directory
+
+- name: delete lock dir on dhcpd server
+  file:
+    path: "{{ dhcpd_lock_dir }}"
+    state: absent
+  delegate_to: "{{ dhcpd_server}}"

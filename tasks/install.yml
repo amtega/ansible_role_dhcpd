@@ -1,14 +1,25 @@
 ---
 # Install tasks
 
-- block:
+- name: install dhcpd packages
+  package:
+    name: "{{ item }}"
+    state: present
+  when: inventory_hostname == dhcpd_server
+  with_items: "{{ dhcpd_packages | default([]) }}"
+  tags:
+    - role::dhcpd
+    - role::dhcpd::packages
+    - role::dhcpd::install
 
-  - name: install dhcpd packages
-    package:
-      name: "{{ item }}"
-      state: present
-    with_items: "{{ dhcpd_packages | default([]) }}"
-    tags:
-      - role::dhcpd
-      - role::dhcpd::packages
-      - role::dhcpd::install
+- name: create config directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+    - "{{ dhcpd_include_base_dir }}"
+    - "{{ dhcpd_subnets_include_dir }}"
+    - "{{ dhcpd_static_include_dir }}"

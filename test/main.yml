@@ -1,15 +1,16 @@
 ---
 # Tasks for tesing role
 
-- name: run idempotence test
+- name: run idempotence test on dhdcpd servers
   hosts: localhost
   roles:
     - role: docker_presets
     - role: docker_sandbox
       docker_sandbox_state: started
+      docker_sandbox_group: docker_sandbox_containers_servers
 
 - name: setup dhcpd config facts
-  hosts: docker_sandbox_containers
+  hosts: docker_sandbox_containers_servers
   tasks:
     - name: setup a fact with eth0 config
       set_fact:
@@ -18,7 +19,7 @@
 
     - name: setup dhcpd subnets config fact
       set_fact:
-        dhcpd_subnets:
+        dhcpd_subnet_addresses:
           - subnet: "{{ eth0_config['network'] }}"
             netmask: "{{ eth0_config['netmask'] }}"
             state: present
@@ -87,7 +88,7 @@
     - idempotence
 
 - name: create some unamanaged files for later testing
-  hosts: docker_sandbox_containers
+  hosts: docker_sandbox_containers_servers
   tasks:
     - name: create testing required directories
       file:
@@ -97,40 +98,40 @@
         group: root
         mode: 0755
       with_items:
-        - /etc/dhcpd/dhcpd.subnets.d
-        - /etc/dhcpd/dhcpd.static.d
+        - /etc/dhcp/dhserver.d/dhcpd.subnets.d
+        - /etc/dhcp/dhserver.d/dhcpd.static.d
 
-    - name: create /etc/dhcpd/dhcpd.subnets.d/test.conf file
+    - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
       copy:
         src: /etc/issue
-        dest: "/etc/dhcpd/dhcpd.subnets.d/test.conf"
+        dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
         force: no
 
-    - name: create /etc/dhcpd/dhcpd.static.d/test.conf file
+    - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
       copy:
          src: /etc/issue
-         dest: "/etc/dhcpd/dhcpd.static.d/test.conf"
+         dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
          force: no
   tags:
     - idempotence
 
 - name: create some fake configuration files for later testing
-  hosts: docker_sandbox_containers
+  hosts: docker_sandbox_containers_servers
   tasks:
-    - name: create /etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf file
+    - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
       copy:
         src: /etc/issue
-        dest: "/etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf"
+        dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
         force: no
 
-    - name: create /etc/dhcpd/dhcpd.static.d/hostacme3.conf file
+    - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
       copy:
         src: /etc/issue
-        dest: "/etc/dhcpd/dhcpd.static.d/hostacme3.conf"
+        dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
         force: no
 
 - name: test dhcpd role with unamanged files deletion disabled
-  hosts: docker_sandbox_containers
+  hosts: docker_sandbox_containers_servers
   roles:
     - role: dhcpd
       dhcpd_delete_unamanaged: false
@@ -154,44 +155,44 @@
             + ".conf" }}
       register: check_subnet1_result
 
-    - name: check /etc/dhcpd/dhcpd.subnets.d/192.168.13.0.conf file
+    - name: check /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.subnets.d/192.168.13.0.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf"
       register: check_subnet2_result
 
-    - name: check /etc/dhcpd/dhcpd.subnets.d/192.168.14.0.conf file
+    - name: check /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.subnets.d/192.168.14.0.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf"
       register: check_subnet3_result
 
-    - name: check /etc/dhcpd/dhcpd.static.d/hostacme1.conf file
+    - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.static.d/hostacme1.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf"
       register: check_static1_result
 
-    - name: check /etc/dhcpd/dhcpd.static.d/hostacme2.conf file
+    - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.static.d/hostacme2.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf"
       register: check_static2_result
 
-    - name: check absent /etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf file
+    - name: check absent /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.subnets.d/192.168.15.0.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
       register: check_absent1_result
 
-    - name: check absent /etc/dhcpd/dhcpd.static.d/hostacme3.conf file
+    - name: check absent /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.static.d/hostacme3.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
       register: check_absent2_result
 
-    - name: check unamanged /etc/dhcpd/dhcpd.subnets.d/test.conf file
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.subnets.d/test.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
       register: check_unamanaged1_result
 
-    - name: check unamanged /etc/dhcpd/dhcpd.static.d/test.conf file
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.static.d/test.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
       register: check_unamanaged2_result
 
     - name: check testing subnets config files exist
@@ -218,19 +219,19 @@
     - idempotence
 
 - name: test dhcpd unamanged files deletion
-  hosts: docker_sandbox_containers
+  hosts: docker_sandbox_containers_servers
   roles:
     - role: dhcpd
       dhcpd_delete_unamanaged: true
   tasks:
-    - name: check unamanged /etc/dhcpd/dhcpd.subnets.d/test.conf file
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.subnets.d/test.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
       register: check_unamanaged1_result
 
-    - name: check unamanged /etc/dhcpd/dhcpd.static.d/test.conf file
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
       stat:
-        path: "/etc/dhcpd/dhcpd.static.d/test.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
       register: check_unamanaged2_result
 
     - name: check testing subnets config files exist

@@ -1,2 +1,13 @@
 ---
 # Role handlers
+
+- name: restart service
+  service:
+    name: dhcpd
+    state: restarted
+    enabled: yes
+  listen:
+    - dhcpd restart
+  tags:
+    - role::dhcpd
+    - role::dhcpd::service
