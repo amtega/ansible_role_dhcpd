@@ -3,19 +3,6 @@
 
 - block:
 
-  - block:
-
-      - name: lock dhcpd server
-        include: lock_create.yml
-
-    rescue:
-
-      - name: force unlock of dhcpd server
-        include: lock_delete.yml
-
-      - name: lock dhcpd server
-        include: lock_create.yml
-
   - name: setup a fact with all necessary subnet include config files
     set_fact:
       dhcpd_subnet_include_files: >-
@@ -52,6 +39,7 @@
       backup: no
     when: item.state == 'present'
     with_items: "{{ dhcpd_subnet_addresses }}"
+    register: dhcpd_configure_subnets_result
     loop_control:
       label: "{{ item.subnet }} / {{ item.netmask }}"
 
@@ -60,6 +48,7 @@
       path: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
       state: absent
     when: item.state == 'absent'
+    register: dhcpd_remove_absent_subnets_result
     with_items: "{{ dhcpd_subnet_addresses }}"
     loop_control:
       label: "{{ item.subnet}} / {{ item.netmask }}"
@@ -74,6 +63,7 @@
       backup: no
     when: item.state == 'present'
     with_items: "{{ dhcpd_static_addresses | default([]) }}"
+    register: dhcpd_configure_static_result
     loop_control:
       label: "{{ item.hostname }} / {{ item.mac }}"
 
@@ -83,6 +73,7 @@
       state: absent
     when: item.state == 'absent'
     with_items: "{{ dhcpd_static_addresses | default([]) }}"
+    register: dhcpd_remove_absent_static_result
     loop_control:
       label: "{{ item.hostname}} / {{ item.mac }}"
 
@@ -106,8 +97,29 @@
       {{ search_includes_result.results
         | sum(attribute="files", start=[] )
         | default([]) }}
+    register: dhcpd_delete_unamanaged_result
     loop_control:
       label: "{{ item.path }}"
+
+  - block:
+
+      - name: lock dhcpd server
+        include: lock_create.yml
+
+    rescue:
+
+      - name: force unlock of dhcpd server
+        include: lock_delete.yml
+
+      - name: lock dhcpd server
+        include: lock_create.yml
+
+    when: >-
+      dhcpd_configure_subnets_result | changed
+        or dhcpd_remove_absent_subnets_result | changed
+        or dhcpd_configure_static_result | changed
+        or dhcpd_remove_absent_static_result | changed
+        or dhcpd_delete_unamanaged_result | changed
 
   - name: create dhcpd main configuration file
     template:
@@ -117,7 +129,14 @@
       group: root
       mode: 0644
       backup: no
-    when: inventory_hostname == dhcpd_server
+    when:
+      - inventory_hostname == dhcpd_server
+      - >-
+        dhcpd_configure_subnets_result | changed
+          or dhcpd_remove_absent_subnets_result | changed
+          or dhcpd_configure_static_result | changed
+          or dhcpd_remove_absent_static_result | changed
+          or dhcpd_delete_unamanaged_result | changed
     notify:
       - dhcpd restart
 

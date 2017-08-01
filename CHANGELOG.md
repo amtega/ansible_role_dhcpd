@@ -11,3 +11,8 @@
 ## 2017-07-28
 
 - Refactored all dhcpd into one role.
+
+## 2017-08-01
+
+- Improved configuration tasks.
+- Fixed idempotence tests.
