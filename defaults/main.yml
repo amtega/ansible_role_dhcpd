@@ -34,7 +34,7 @@
 #    next_server: 192.168.13.13
 #    filename: "pxelinux.0"
 
-dhcpd_subnet_addresses:
+dhcpd_subnet_addresses: []
 
 # List of static addresses
 #
@@ -52,7 +52,7 @@ dhcpd_subnet_addresses:
 #   ipv4_address: 192.168.13.120
 #   state: present
 
-dhcpd_static_addresses:
+dhcpd_static_addresses: []
 
 # dhcpd server to operate. If not specified points to the current host.
 # If different from current inventory hostname the role assumes that this is a
@@ -67,4 +67,4 @@ dhcpd_server: "{{ inventory_hostname }}"
 # other hosts different from the dhcpd server itself is better to leave this
 # value in false
 
-dhcpd_delete_unamanaged: false
+dhcpd_delete_unmanaged: false

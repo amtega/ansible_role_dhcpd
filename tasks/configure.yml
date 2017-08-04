@@ -3,51 +3,30 @@
 
 - block:
 
-  - name: setup a fact with all necessary subnet include config files
+  - name: disable unamanged files deletion if the role is called from a clients
     set_fact:
-      dhcpd_subnet_include_files: >-
-        {{ dhcpd_subnet_addresses
-          | selectattr('state', 'equalto', 'present')
-          | map(attribute='subnet')
-          | map('regex_replace', '^', dhcpd_subnets_include_dir + "/")
-          | map('regex_replace', '$', '.conf')
-          | list }}
-
-  - name: setup a fact with all necessary static include config files
-    set_fact:
-      dhcpd_static_include_files: >-
-        {{ dhcpd_static_addresses
-          | selectattr('state', 'equalto', 'present')
-          | map(attribute='hostname')
-          | map('regex_replace', '^', dhcpd_static_include_dir + "/")
-          | map('regex_replace', '$', '.conf')
-          | list }}
-
-  - name: setup a fact with all necessary include files
-    set_fact:
-      dhcpd_include_files: >-
-        {{ dhcpd_static_include_files
-          + dhcpd_subnet_include_files }}
+      dhcpd_delete_unmanaged: false
+    when: inventory_hostname != dhcpd_server
 
   - name: create configuration files for subnets
     template:
       src: subnet.template.j2
-      dest: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet | default('') }}.conf"
+      dest: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
       owner: root
       group: root
       mode: 0644
       backup: no
-    when: item.state | default('') == 'present'
+    when: item.state == 'present'
     with_items: "{{ dhcpd_subnet_addresses }}"
     register: dhcpd_configure_subnets_result
     loop_control:
-      label: "{{ item.subnet | default('') }} / {{ item.netmask | default('') }}"
+      label: "{{ item.subnet }} / {{ item.netmask }}"
 
   - name: remove configuration files for subnets marked as absent
     file:
       path: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
       state: absent
-    when: item.state | default('') == 'absent'
+    when: item.state == 'absent'
     register: dhcpd_remove_absent_subnets_result
     with_items: "{{ dhcpd_subnet_addresses }}"
     loop_control:
@@ -61,7 +40,7 @@
       group: root
       mode: 0644
       backup: no
-    when: item.state | default('') == 'present'
+    when: item.state == 'present'
     with_items: "{{ dhcpd_static_addresses | default([]) }}"
     register: dhcpd_configure_static_result
     loop_control:
@@ -71,7 +50,7 @@
     file:
       path: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
       state: absent
-    when: item.state | default('') == 'absent'
+    when: item.state == 'absent'
     with_items: "{{ dhcpd_static_addresses | default([]) }}"
     register: dhcpd_remove_absent_static_result
     loop_control:
@@ -86,20 +65,21 @@
       - "{{ dhcpd_static_include_dir }}"
     register: search_includes_result
 
+  - name: build list of include files from existing ones
+    set_fact:
+      dhcpd_include_files: >-
+        {{ search_includes_result.results
+          | map(attribute="files")
+          | sum(start=[])
+          | map(attribute="path")
+          | list
+          | default([]) }}
+    when: not dhcpd_delete_unmanaged
+
   - name: delete unamanged include files
-    file:
-      path: "{{ item.path }}"
-      state: absent
-    when:
-      - dhcpd_delete_unamanaged
-      - item.path | default('') not in dhcpd_include_files
-    with_items: >-
-      {{ search_includes_result.results
-        | sum(attribute="files", start=[] )
-        | default([]) }}
-    register: dhcpd_delete_unamanaged_result
-    loop_control:
-      label: "{{ item.path }}"
+    include: delete_unamanaged.yml
+    when: dhcpd_delete_unmanaged
+    static: false
 
   - block:
 
@@ -119,7 +99,7 @@
         or dhcpd_remove_absent_subnets_result | changed
         or dhcpd_configure_static_result | changed
         or dhcpd_remove_absent_static_result | changed
-        or dhcpd_delete_unamanaged_result | changed
+        or dhcpd_delete_unmanaged_result | changed
 
   - name: create dhcpd main configuration file
     template:
@@ -130,13 +110,11 @@
       mode: 0644
       backup: no
     when:
-      - inventory_hostname == dhcpd_server
-      - >-
         dhcpd_configure_subnets_result | changed
           or dhcpd_remove_absent_subnets_result | changed
           or dhcpd_configure_static_result | changed
           or dhcpd_remove_absent_static_result | changed
-          or dhcpd_delete_unamanaged_result | changed
+          or dhcpd_delete_unmanaged_result | changed
     notify:
       - dhcpd restart
 
@@ -145,7 +123,7 @@
     - name: unlock dhcpd server
       include: lock_delete.yml
 
-  delegate_to: "{{ dhcpd_server}}"
+  delegate_to: "{{ dhcpd_server }}"
   tags:
     - role::dhcpd
     - role::dhcpd::configure

@@ -99,17 +99,17 @@
         dhcpd_static_addresses:
          - hostname: hostacme1
            mac: c5:6f:75:cc:00:01
-           ipv4_address: 192.168.15.120
+           ipv4_address: 192.168.15.121
            state: present
 
          - hostname: hostacme2
            mac: c5:6f:75:cc:00:02
-           ipv4_address: 192.168.15.121
+           ipv4_address: 192.168.15.122
            state: present
 
          - hostname: hostacme3
-           mac: c5:6f:75:cc:00:02
-           ipv4_address: 192.168.15.121
+           mac: c5:6f:75:cc:00:03
+           ipv4_address: 192.168.15.123
            state: absent
 
   tags:
@@ -121,175 +121,175 @@
     - name: setup dhcpd clients static addresses config fact
       set_fact:
         dhcpd_static_addresses:
-         - hostname: hostacme1
-           mac: c5:6f:75:cc:00:01
-           ipv4_address: 192.168.15.125
+         - hostname: hostacme4
+           mac: c5:6f:75:cc:00:04
+           ipv4_address: 192.168.15.124
            state: present
 
   tags:
     - idempotence
 
-# - name: create some unamanaged files for later dhcpd servers testing
-#   hosts: docker_sandbox_containers_servers
-#   tasks:
-#     - name: create dhcpd servers testing required directories
-#       file:
-#         path: "{{ item }}"
-#         state: directory
-#         owner: root
-#         group: root
-#         mode: 0755
-#       with_items:
-#         - /etc/dhcp/dhserver.d/dhcpd.subnets.d
-#         - /etc/dhcp/dhserver.d/dhcpd.static.d
-#
-#     - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
-#       copy:
-#         src: /etc/issue
-#         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
-#         force: no
-#
-#     - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
-#       copy:
-#          src: /etc/issue
-#          dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
-#          force: no
-#   tags:
-#     - idempotence
-#
-# - name: create some fake configuration files for later dhcpd servers testing
-#   hosts: docker_sandbox_containers_servers
-#   tasks:
-#     - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
-#       copy:
-#         src: /etc/issue
-#         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
-#         force: no
-#
-#     - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
-#       copy:
-#         src: /etc/issue
-#         dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
-#         force: no
-#
-# - name: test dhcpd server role with unamanged files deletion disabled
-#   hosts: docker_sandbox_containers_servers
-#   roles:
-#     - role: dhcpd
-#       dhcpd_delete_unamanaged: false
-#   tasks:
-#     - name: check dhcpd server process is running
-#       shell: ps aux | grep dhcpd | grep -v grep
-#       changed_when: false
-#       register: search_dhcpd_process_result
-#       failed_when: search_dhcpd_process_result.rc != 0
-#
-#     - name: >-
-#         check {{ dhcpd_subnets_include_dir
-#             + '/'
-#             + hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network']
-#             + '.conf' + ' file' }}
-#       stat:
-#         path: >-
-#           {{ dhcpd_subnets_include_dir
-#             + "/"
-#             + hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network']
-#             + ".conf" }}
-#       register: check_subnet1_result
-#
-#     - name: check /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf"
-#       register: check_subnet2_result
-#
-#     - name: check /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf"
-#       register: check_subnet3_result
-#
-#     - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf"
-#       register: check_static1_result
-#
-#     - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf"
-#       register: check_static2_result
-#
-#     - name: >-
-#         check absent /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
-#       register: check_absent1_result
-#
-#     - name: check absent /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
-#       register: check_absent2_result
-#
-#     - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
-#       register: check_unamanaged1_result
-#
-#     - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
-#       register: check_unamanaged2_result
-#
-#     - name: check testing subnets config files exist
-#       assert:
-#         that:
-#           - check_subnet1_result.stat.exists
-#           - check_subnet2_result.stat.exists
-#           - check_subnet3_result.stat.exists
-#           - check_static1_result.stat.exists
-#           - check_static2_result.stat.exists
-#           - not check_absent1_result.stat.exists
-#           - not check_absent2_result.stat.exists
-#           - check_unamanaged1_result.stat.exists
-#           - check_unamanaged2_result.stat.exists
-#
-#     - name: test dhcpd server restart handler
-#       copy:
-#         src: /etc/issue
-#         dest: /tmp/issue2
-#         force: no
-#       notify:
-#         - dhcpd restart
-#   tags:
-#     - idempotence
-#
-# - name: test dhcpd server unamanged files deletion
-#   hosts: docker_sandbox_containers_servers
-#   roles:
-#     - role: dhcpd
-#       dhcpd_delete_unamanaged: true
-#   tasks:
-#     - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
-#       register: check_unamanaged1_result
-#
-#     - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
-#       stat:
-#         path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
-#       register: check_unamanaged2_result
-#
-#     - name: check testing subnets config files exist
-#       assert:
-#         that:
-#           - not check_unamanaged1_result.stat.exists
-#           - not check_unamanaged2_result.stat.exists
+- name: create some unamanaged files for later dhcpd servers testing
+  hosts: docker_sandbox_containers_servers
+  tasks:
+    - name: create dhcpd servers testing required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - /etc/dhcp/dhserver.d/dhcpd.subnets.d
+        - /etc/dhcp/dhserver.d/dhcpd.static.d
 
+    - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
+      copy:
+        src: /etc/issue
+        dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
+        force: no
 
+    - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
+      copy:
+         src: /etc/issue
+         dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
+         force: no
+  tags:
+    - idempotence
 
-- name: setup dhcpd servers
+- name: create some fake configuration files for later dhcpd servers testing
+  hosts: docker_sandbox_containers_servers
+  tasks:
+    - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
+      copy:
+        src: /etc/issue
+        dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
+        force: no
+
+    - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
+      copy:
+        src: /etc/issue
+        dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
+        force: no
+
+- name: test dhcpd server role with unamanged files deletion disabled
   hosts: docker_sandbox_containers_servers
   roles:
     - role: dhcpd
-      dhcpd_delete_unamanaged: false
+      dhcpd_delete_unmanaged: false
+  tasks:
+    - name: check dhcpd server process is running
+      shell: ps aux | grep dhcpd | grep -v grep
+      changed_when: false
+      register: search_dhcpd_process_result
+      failed_when: search_dhcpd_process_result.rc != 0
+
+    - name: >-
+        check {{ dhcpd_subnets_include_dir
+            + '/'
+            + hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network']
+            + '.conf' + ' file' }}
+      stat:
+        path: >-
+          {{ dhcpd_subnets_include_dir
+            + "/"
+            + hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network']
+            + ".conf" }}
+      register: check_subnet1_result
+
+    - name: check /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf"
+      register: check_subnet2_result
+
+    - name: check /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf"
+      register: check_subnet3_result
+
+    - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf"
+      register: check_static1_result
+
+    - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf"
+      register: check_static2_result
+
+    - name: >-
+        check absent /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
+      register: check_absent1_result
+
+    - name: check absent /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
+      register: check_absent2_result
+
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
+      register: check_unamanaged1_result
+
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
+      register: check_unamanaged2_result
+
+    - name: check testing subnets config files exist
+      assert:
+        that:
+          - check_subnet1_result.stat.exists
+          - check_subnet2_result.stat.exists
+          - check_subnet3_result.stat.exists
+          - check_static1_result.stat.exists
+          - check_static2_result.stat.exists
+          - not check_absent1_result.stat.exists
+          - not check_absent2_result.stat.exists
+          - check_unamanaged1_result.stat.exists
+          - check_unamanaged2_result.stat.exists
+
+    - name: test dhcpd server restart handler
+      copy:
+        src: /etc/issue
+        dest: /tmp/issue2
+        force: no
+      notify:
+        - dhcpd restart
+  tags:
+    - idempotence
+
+- name: test dhcpd server unamanged files deletion
+  hosts: docker_sandbox_containers_servers
+  roles:
+    - role: dhcpd
+      dhcpd_delete_unmanaged: true
+  tasks:
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
+      register: check_unamanaged1_result
+
+    - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
+      register: check_unamanaged2_result
+
+    - name: check testing subnets config files exist
+      assert:
+        that:
+          - not check_unamanaged1_result.stat.exists
+          - not check_unamanaged2_result.stat.exists
+
+
+
+# - name: setup dhcpd servers
+#   hosts: docker_sandbox_containers_servers
+#   roles:
+#     - role: dhcpd
+#       dhcpd_delete_unmanaged: false
 
 
 
@@ -309,7 +309,6 @@
         dhcpd_server: >-
           {{ dhcpd_random_server }}
 
-    - debug: var=dhcpd_server
 
 - name: test dhcpd clients
   hosts: docker_sandbox_containers_clients
@@ -317,6 +316,17 @@
     - role: dhcpd
   tags:
     - idempotence
+  tasks:
+    - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme4.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme4.conf"
+      register: check_static4_result
+      delegate_to: "{{ dhcpd_server }}"
+
+    - name: check testing subnets config files exist
+      assert:
+        that:
+          - check_static4_result.stat.exists
 
 - name: cleanup docker docker dhcpd servers sandbox
   hosts: localhost
