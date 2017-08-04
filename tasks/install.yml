@@ -23,3 +23,4 @@
     - "{{ dhcpd_include_base_dir }}"
     - "{{ dhcpd_subnets_include_dir }}"
     - "{{ dhcpd_static_include_dir }}"
+  delegate_to: "{{ dhcpd_server }}"

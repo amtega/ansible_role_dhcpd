@@ -32,22 +32,22 @@
   - name: create configuration files for subnets
     template:
       src: subnet.template.j2
-      dest: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
+      dest: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet | default('') }}.conf"
       owner: root
       group: root
       mode: 0644
       backup: no
-    when: item.state == 'present'
+    when: item.state | default('') == 'present'
     with_items: "{{ dhcpd_subnet_addresses }}"
     register: dhcpd_configure_subnets_result
     loop_control:
-      label: "{{ item.subnet }} / {{ item.netmask }}"
+      label: "{{ item.subnet | default('') }} / {{ item.netmask | default('') }}"
 
   - name: remove configuration files for subnets marked as absent
     file:
       path: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
       state: absent
-    when: item.state == 'absent'
+    when: item.state | default('') == 'absent'
     register: dhcpd_remove_absent_subnets_result
     with_items: "{{ dhcpd_subnet_addresses }}"
     loop_control:
@@ -61,7 +61,7 @@
       group: root
       mode: 0644
       backup: no
-    when: item.state == 'present'
+    when: item.state | default('') == 'present'
     with_items: "{{ dhcpd_static_addresses | default([]) }}"
     register: dhcpd_configure_static_result
     loop_control:
@@ -71,7 +71,7 @@
     file:
       path: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
       state: absent
-    when: item.state == 'absent'
+    when: item.state | default('') == 'absent'
     with_items: "{{ dhcpd_static_addresses | default([]) }}"
     register: dhcpd_remove_absent_static_result
     loop_control:
@@ -92,7 +92,7 @@
       state: absent
     when:
       - dhcpd_delete_unamanaged
-      - item.path not in dhcpd_include_files
+      - item.path | default('') not in dhcpd_include_files
     with_items: >-
       {{ search_includes_result.results
         | sum(attribute="files", start=[] )
