@@ -17,3 +17,8 @@
 - Improved configuration tasks.
 - Fixed idempotence tests.
 - Added client mode tests.
+
+## 2017-09-15
+
+- Fixed bug with unamanged file deletion.
+- Improved tests.

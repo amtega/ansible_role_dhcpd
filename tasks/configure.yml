@@ -77,7 +77,7 @@
     when: not dhcpd_delete_unmanaged
 
   - name: delete unamanged include files
-    include: delete_unamanaged.yml
+    include: delete_unmanaged.yml
     when: dhcpd_delete_unmanaged
     static: false
 
@@ -100,6 +100,12 @@
         or dhcpd_configure_static_result | changed
         or dhcpd_remove_absent_static_result | changed
         or dhcpd_delete_unmanaged_result | changed
+
+  - debug: msg="{{ dhcpd_configure_subnets_result | changed }}"
+  - debug: msg="{{ dhcpd_remove_absent_subnets_result | changed }}"
+  - debug: msg="{{ dhcpd_configure_static_result | changed }}"
+  - debug: msg="{{ dhcpd_remove_absent_static_result | changed }}"
+  - debug: msg="{{ dhcpd_delete_unmanaged_result | changed | default(false) }}"
 
   - name: create dhcpd main configuration file
     template:

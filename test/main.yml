@@ -145,13 +145,13 @@
 
     - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
       copy:
-        src: /etc/issue
+        content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
         force: no
 
     - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/test.conf file
       copy:
-         src: /etc/issue
+         content: ""
          dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
          force: no
   tags:
@@ -162,13 +162,13 @@
   tasks:
     - name: create /etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf file
       copy:
-        src: /etc/issue
+        content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
         force: no
 
     - name: create /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf file
       copy:
-        src: /etc/issue
+        content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
         force: no
 
@@ -253,8 +253,8 @@
 
     - name: test dhcpd server restart handler
       copy:
-        src: /etc/issue
-        dest: /tmp/issue2
+        content: ""
+        dest: /tmp/emptyfile
         force: no
       notify:
         - dhcpd restart
@@ -285,11 +285,17 @@
 
 
 
-# - name: setup dhcpd servers
-#   hosts: docker_sandbox_containers_servers
-#   roles:
-#     - role: dhcpd
-#       dhcpd_delete_unmanaged: false
+
+
+- name: setup dhcpd servers to test dhcp clients
+  hosts: docker_sandbox_containers_servers
+  roles:
+    - role: dhcpd
+      dhcpd_delete_unmanaged: false
+
+
+
+
 
 
 
@@ -303,12 +309,10 @@
         dhcpd_random_server: >-
           {{ groups['docker_sandbox_containers_servers'] | random }}
 
-
     - name: point dhcpd_server fact to random dhcpd server
       set_fact:
         dhcpd_server: >-
           {{ dhcpd_random_server }}
-
 
 - name: test dhcpd clients
   hosts: docker_sandbox_containers_clients
@@ -320,13 +324,13 @@
     - name: check /etc/dhcp/dhserver.d/dhcpd.static.d/hostacme4.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme4.conf"
-      register: check_static4_result
+      register: check_client_static_result
       delegate_to: "{{ dhcpd_server }}"
 
-    - name: check testing subnets config files exist
+    - name: check testing clients static addresses config files exist
       assert:
         that:
-          - check_static4_result.stat.exists
+          - check_client_static_result.stat.exists
 
 - name: cleanup docker docker dhcpd servers sandbox
   hosts: localhost
