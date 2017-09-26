@@ -1,7 +1,7 @@
 ---
 # Role variables
 
-# Packages necesasry for dpchd service
+# Packages required by dpchd service
 
 dhcpd_packages:
   - dhcp

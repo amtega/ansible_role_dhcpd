@@ -24,3 +24,6 @@
     - "{{ dhcpd_subnets_include_dir }}"
     - "{{ dhcpd_static_include_dir }}"
   delegate_to: "{{ dhcpd_server }}"
+  tags:
+    - role::dhcpd
+    - role::dhcpd::install

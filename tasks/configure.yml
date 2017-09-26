@@ -56,7 +56,47 @@
     loop_control:
       label: "{{ item.hostname}} / {{ item.mac }}"
 
-  - name: search include files that already exists
+  - name: search include files that already exists in dhcpd config dirs
+    find:
+      paths: "{{ item }}"
+      patterns: "*.conf"
+    when: >
+      inventory_hostname == dhcpd_server
+      and dhcpd_delete_unmanaged
+    with_items:
+      - "{{ dhcpd_subnets_include_dir }}"
+      - "{{ dhcpd_static_include_dir }}"
+    register: search_includes_result
+
+  - name: delete unamanged include files
+    file:
+      path: "{{ item.path }}"
+      state: absent
+    when: >
+      inventory_hostname == dhcpd_server
+      and dhcpd_delete_unmanaged
+      and item.path | default('') not in
+        dhcpd_subnet_addresses
+          | selectattr('state', 'equalto', 'present')
+          | map(attribute='subnet')
+          | map('regex_replace', '^', dhcpd_subnets_include_dir + "/")
+          | map('regex_replace', '$', '.conf')
+          | list
+        + dhcpd_static_addresses
+            | selectattr('state', 'equalto', 'present')
+            | map(attribute='hostname')
+            | map('regex_replace', '^', dhcpd_static_include_dir + "/")
+            | map('regex_replace', '$', '.conf')
+            | list
+    with_items: >-
+      {{ search_includes_result.results
+        | sum(attribute="files", start=[])
+        | default([]) }}
+    register: dhcpd_delete_unmanaged_result
+    loop_control:
+      label: "{{ item.path }}"
+
+  - name: search include files remaining in dhcpd config dirs
     find:
       paths: "{{ item }}"
       patterns: "*.conf"
@@ -65,7 +105,7 @@
       - "{{ dhcpd_static_include_dir }}"
     register: search_includes_result
 
-  - name: build list of include files from existing ones
+  - name: setup fact with the final list of include files
     set_fact:
       dhcpd_include_files: >-
         {{ search_includes_result.results
@@ -74,38 +114,6 @@
           | map(attribute="path")
           | list
           | default([]) }}
-    when: not dhcpd_delete_unmanaged
-
-  - name: delete unamanged include files
-    include: delete_unmanaged.yml
-    when: dhcpd_delete_unmanaged
-    static: false
-
-  - block:
-
-      - name: lock dhcpd server
-        include: lock_create.yml
-
-    rescue:
-
-      - name: force unlock of dhcpd server
-        include: lock_delete.yml
-
-      - name: lock dhcpd server
-        include: lock_create.yml
-
-    when: >-
-      dhcpd_configure_subnets_result | changed
-        or dhcpd_remove_absent_subnets_result | changed
-        or dhcpd_configure_static_result | changed
-        or dhcpd_remove_absent_static_result | changed
-        or dhcpd_delete_unmanaged_result | changed
-
-  - debug: msg="{{ dhcpd_configure_subnets_result | changed }}"
-  - debug: msg="{{ dhcpd_remove_absent_subnets_result | changed }}"
-  - debug: msg="{{ dhcpd_configure_static_result | changed }}"
-  - debug: msg="{{ dhcpd_remove_absent_static_result | changed }}"
-  - debug: msg="{{ dhcpd_delete_unmanaged_result | changed | default(false) }}"
 
   - name: create dhcpd main configuration file
     template:
@@ -116,18 +124,13 @@
       mode: 0644
       backup: no
     when:
-        dhcpd_configure_subnets_result | changed
-          or dhcpd_remove_absent_subnets_result | changed
-          or dhcpd_configure_static_result | changed
-          or dhcpd_remove_absent_static_result | changed
-          or dhcpd_delete_unmanaged_result | changed
+        dhcpd_configure_subnets_result | default({}) | changed
+          or dhcpd_remove_absent_subnets_result | default({}) | changed
+          or dhcpd_configure_static_result | default({}) | changed
+          or dhcpd_remove_absent_static_result | default({}) | changed
+          or dhcpd_delete_unmanaged_result | default({}) | changed
     notify:
       - dhcpd restart
-
-  always:
-
-    - name: unlock dhcpd server
-      include: lock_delete.yml
 
   delegate_to: "{{ dhcpd_server }}"
   tags:

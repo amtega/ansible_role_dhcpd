@@ -22,3 +22,10 @@
 
 - Fixed bug with unamanged file deletion.
 - Improved tests.
+
+## 2017-09-26
+
+- Completed tests.
+- Removed lock mechanism.
+- Refactored unamanged config files removal.
+- First stable release.
