@@ -29,3 +29,8 @@
 - Removed lock mechanism.
 - Refactored unamanged config files removal.
 - First stable release.
+
+## 2017-09-29
+
+- Refactored include directives by include_tasks / import_tasks.
+- Updated documentation.

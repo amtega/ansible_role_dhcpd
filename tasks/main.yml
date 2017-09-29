@@ -2,22 +2,19 @@
 # Role tasks
 
 - name: install dhcpd
-  include: install.yml
-  static: false
+  include_tasks: install.yml
   tags:
     - role::dhcpd
     - role::dhcpd::install
 
 - name: configure dhcpd
-  include: configure.yml
-  static: false
+  include_tasks: configure.yml
   tags:
     - role::dhcpd
     - role::dhcpd::configure
 
 - name: setup dhcpd service
-  include: service.yml
-  static: false
+  include_tasks: service.yml
   tags:
     - role::dhcpd
     - role::dhcpd::service
