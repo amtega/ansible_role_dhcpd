@@ -10,7 +10,7 @@ galaxy_info:
   platforms:
   - name: Fedora
     versions:
-    - 25
+    - 26
   - name: EL
     versions:
     - 6
@@ -19,3 +19,4 @@ galaxy_info:
     - system
     - dhcp
     - dhcpd
+    - networking
