@@ -1,6 +1,6 @@
 # Ansible dhcpd role
 
-This is an [Ansible](http://www.ansible.com) role to setup a dhcpd server that allows other hosts to add some configs into.
+This is an [Ansible](http://www.ansible.com) role to setup a dhcpd server that allows other hosts to add some configs to it.
 
 ## Requirements
 
@@ -9,6 +9,8 @@ This is an [Ansible](http://www.ansible.com) role to setup a dhcpd server that a
 ## Role Variables
 
 A list of all the default variables for this role is available in `defaults/main.yml`.
+
+By default the role assumes that you want to setup a full dhcpd server, but if the `dhcpd_server` points to another host the role works as a dhcpd client that allows you to setup parameters on a remote dhcpd server, and therefore it will skip all stuff related to dhcpd package install and daemon config.
 
 ## Dependencies
 
@@ -80,8 +82,20 @@ $ ansible-playbook --skip-tags "role::docker_engine" main.yml
 
 ## License
 
-Not defined.
+Copyright (C) 2017 AMTEGA - Xunta de Galicia
+
+This role is free software: you can redistribute it and/or modify
+it under the terms of:
+GNU General Public License version 3, or (at your option) any later version;
+or the European Union Public License, either Version 1.2 or – as soon
+they will be approved by the European Commission ­subsequent versions of
+the EUPL;
+
+This role is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details or European Union Public License for more details.
 
 ## Author Information
 
-- Juan Antonio Valiño García ([juanval@edu.xunta.es](mailto:juanval@edu.xunta.es)). Amtega - Xunta de Galicia
+- Juan Antonio Valiño García
