@@ -4,7 +4,7 @@
 - name: load docker presets
   hosts: localhost
   roles:
-    - role: docker_presets
+    - role: amtega.docker_presets
 
 - name: setup facts with containers sets for dhcpd servers and clients
   hosts: localhost
@@ -20,7 +20,7 @@
 - name: setup sandbox for dhdcpd servers
   hosts: localhost
   roles:
-    - role: docker_sandbox
+    - role: amtega.docker_sandbox
       docker_sandbox_containers: "{{ docker_sandbox_containers_servers }}"
       docker_sandbox_state: started
       docker_sandbox_group: docker_sandbox_containers_servers
@@ -29,7 +29,7 @@
 - name: setup sandbox for dhdcpd clients
   hosts: localhost
   roles:
-    - role: docker_sandbox
+    - role: amtega.docker_sandbox
       docker_sandbox_containers: "{{ docker_sandbox_containers_clients }}"
       docker_sandbox_state: started
       docker_sandbox_group: docker_sandbox_containers_clients
@@ -175,7 +175,7 @@
 - name: test dhcpd server role with unamanged files deletion disabled
   hosts: docker_sandbox_containers_servers
   roles:
-    - role: dhcpd
+    - role: amtega.dhcpd
       dhcpd_delete_unmanaged: false
   tasks:
     - name: check dhcpd server process is running
@@ -264,7 +264,7 @@
 - name: test dhcpd server unamanged files deletion
   hosts: docker_sandbox_containers_servers
   roles:
-    - role: dhcpd
+    - role: amtega.dhcpd
       dhcpd_delete_unmanaged: true
   tasks:
     - name: check unamanged /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf file
@@ -286,7 +286,7 @@
 - name: setup dhcpd servers to test dhcp clients
   hosts: docker_sandbox_containers_servers
   roles:
-    - role: dhcpd
+    - role: amtega.dhcpd
       dhcpd_delete_unmanaged: false
 
 - name: point dhcpd clients config to servers
@@ -305,7 +305,7 @@
 - name: test dhcpd clients
   hosts: docker_sandbox_containers_clients
   roles:
-    - role: dhcpd
+    - role: amtega.dhcpd
   tags:
     - idempotence
   tasks:
@@ -323,7 +323,7 @@
 - name: cleanup docker docker dhcpd servers sandbox
   hosts: localhost
   roles:
-    - role: docker_sandbox
+    - role: amtega.docker_sandbox
       docker_sandbox_containers: "{{ docker_sandbox_containers_servers }}"
       docker_sandbox_state: absent
       docker_sandbox_cleanup_by_user: false
@@ -332,7 +332,7 @@
 - name: cleanup docker docker dhcpd clients sandbox
   hosts: localhost
   roles:
-    - role: docker_sandbox
+    - role: amtega.docker_sandbox
       docker_sandbox_containers: "{{ docker_sandbox_containers_clients }}"
       docker_sandbox_state: absent
       docker_sandbox_cleanup_by_user: false
