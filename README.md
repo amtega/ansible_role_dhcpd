@@ -61,7 +61,7 @@ This is an example playbook:
         mac: c5:6f:75:cc:00:02
         ipv4_address: 192.168.15.121
   roles:
-    - dhcpd
+    - amtega.dhcpd
 ```
 
 ## Testing
@@ -69,14 +69,14 @@ This is an example playbook:
 Test are based on docker containers. You can run the tests with the following commands:
 
 ```shell
-$ cd dhcpd/test
+$ cd amtega.dhcpd/test
 $ ansible-playbook main.yml
 ```
 
 If you have docker engine configured you can avoid running dependant 'docker_engine' role (that usually requries root privileges) with the following commands:
 
 ```shell
-$ cd dhcpd/test
+$ cd amtega.dhcpd/test
 $ ansible-playbook --skip-tags "role::docker_engine" main.yml
 ```
 
