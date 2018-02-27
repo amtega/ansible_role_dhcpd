@@ -1,5 +1,5 @@
 ---
-# Tasks for tesing role
+# Tasks for testing role
 
 - name: load docker presets
   hosts: localhost
