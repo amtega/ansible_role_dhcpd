@@ -130,7 +130,6 @@
             or dhcpd_delete_unmanaged_result | default({}) | changed
       notify:
         - dhcpd restart
-
   delegate_to: "{{ dhcpd_server }}"
   tags:
     - role::dhcpd
