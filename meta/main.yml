@@ -2,6 +2,7 @@
 # Role dependencies
 
 galaxy_info:
+  role_name: dhcpd
   author: Juan Antonio Valiño García
   description: Setup a dhcpd server that allows delegated host config
   company: AMTEGA - Xunta de Galicia
