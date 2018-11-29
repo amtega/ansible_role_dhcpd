@@ -1,11 +1,6 @@
 ---
 # Role variables
 
-# Packages required by dpchd service
-
-dhcpd_packages:
-  - dhcp
-
 # Include paths
 
 dhcpd_include_base_dir: /etc/dhcp/dhserver.d

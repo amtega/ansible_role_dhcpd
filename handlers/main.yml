@@ -1,7 +1,7 @@
 ---
 # Role handlers
 
-- name: restart service
+- name: dhcpd restart service
   service:
     name: dhcpd
     state: restarted

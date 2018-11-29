@@ -16,7 +16,7 @@
         mode: 0644
         backup: no
       when: item.state == 'present'
-      with_items: "{{ dhcpd_subnet_addresses }}"
+      loop: "{{ dhcpd_subnet_addresses }}"
       register: dhcpd_configure_subnets_result
       loop_control:
         label: "{{ item.subnet }} / {{ item.netmask }}"
@@ -27,7 +27,7 @@
         state: absent
       when: item.state == 'absent'
       register: dhcpd_remove_absent_subnets_result
-      with_items: "{{ dhcpd_subnet_addresses }}"
+      loop: "{{ dhcpd_subnet_addresses }}"
       loop_control:
         label: "{{ item.subnet}} / {{ item.netmask }}"
 
@@ -40,7 +40,7 @@
         mode: 0644
         backup: no
       when: item.state == 'present'
-      with_items: "{{ dhcpd_static_addresses | default([]) }}"
+      loop: "{{ dhcpd_static_addresses | default([]) }}"
       register: dhcpd_configure_static_result
       loop_control:
         label: "{{ item.hostname }} / {{ item.mac }}"
@@ -50,7 +50,7 @@
         path: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
         state: absent
       when: item.state == 'absent'
-      with_items: "{{ dhcpd_static_addresses | default([]) }}"
+      loop: "{{ dhcpd_static_addresses | default([]) }}"
       register: dhcpd_remove_absent_static_result
       loop_control:
         label: "{{ item.hostname}} / {{ item.mac }}"
@@ -62,7 +62,7 @@
       when: >
         inventory_hostname == dhcpd_server
         and dhcpd_delete_unmanaged
-      with_items:
+      loop:
         - "{{ dhcpd_subnets_include_dir }}"
         - "{{ dhcpd_static_include_dir }}"
       register: search_includes_result
@@ -87,7 +87,7 @@
               | map('regex_replace', '^', dhcpd_static_include_dir + "/")
               | map('regex_replace', '$', '.conf')
               | list
-      with_items: >-
+      loop: >-
         {{ search_includes_result.results
           | sum(attribute="files", start=[])
           | default([]) }}
@@ -99,7 +99,7 @@
       find:
         paths: "{{ item }}"
         patterns: "*.conf"
-      with_items:
+      loop:
         - "{{ dhcpd_subnets_include_dir }}"
         - "{{ dhcpd_static_include_dir }}"
       register: search_includes_result
