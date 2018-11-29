@@ -1,10 +1,15 @@
 ---
 # Tasks for testing role
 
-- name: load docker presets
+- name: configure docker sandbox environment
   hosts: localhost
   roles:
     - role: amtega.docker_presets
+      docker_presets_images_json_query: >-
+        [? starts_with(name, `centos-6`)
+           || starts_with(name, `centos-7`)
+           || starts_with(name, `fedora-27`)
+           || starts_with(name, `fedora-28`) ]
   tags:
     - sandbox
 
@@ -43,7 +48,7 @@
       docker_sandbox_cleanup_by_ppid: false
       docker_sandbox_idempotence_test: false
   tags:
-    - sandbox         
+    - sandbox
 
 - name: setup dhcpd servers config facts
   hosts: docker_sandbox_containers_servers
