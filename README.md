@@ -27,9 +27,10 @@ This is an example playbook:
   hosts: localhost  
   vars:
     dhcpd_subnet_addresses:
-      - subnet: "192.168.13.0"
-        netmask: "255.255.255.0"
-        routers: "192.168.13.1"
+      - subnet: 192.168.13.0
+        netmask: 255.255.255.0
+        routers:
+          - 192.168.13.1
         dns_servers:
          - 192.168.13.2
          - 192.168.13.3
@@ -38,11 +39,12 @@ This is an example playbook:
         default_lease_time: 21600
         max_lease_time: 43200
         next_server: 192.168.13.13
-        filename: "pxelinux.0"
+        filename: pxelinux.0
 
-      - subnet: "192.168.14.0"
-        netmask: "255.255.255.0"
-        routers: "192.168.14.1"
+      - subnet: 192.168.14.0
+        netmask: 255.255.255.0
+        routers:
+          - 192.168.14.1
         dns_servers:
          - 192.168.14.2
          - 192.168.14.3
@@ -51,7 +53,7 @@ This is an example playbook:
         default_lease_time: 21600
         max_lease_time: 43200
         next_server: 192.168.14.13
-        filename: "pxelinux.0"
+        filename: pxelinux.0
 
     dhcpd_static_addresses:
       - hostname: hostacme1

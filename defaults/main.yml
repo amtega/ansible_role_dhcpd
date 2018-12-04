@@ -7,7 +7,7 @@
 #   subnet: <dhcp network address in format a.b.c.d>
 #   netmask: <dhcp network mask in format a.b.c.d>
 #   state: <can be "present" or "absent">
-#   routers: <dhcp network router in format a.b.c.d>
+#   routers: <list of network routers in format a.b.c.d>
 #   dns_servers: <list of dhcp DNS servers in format a.b.c.d>
 #   range_start: <dhcp range start in format a.b.c.d>
 #   range_end: <dhcp range end in format a.b.c.d>

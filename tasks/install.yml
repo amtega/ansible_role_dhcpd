@@ -3,7 +3,7 @@
 
 - name: create config directories
   file:
-    path: "{{ item }}"
+    path: "{{ dhcpd_include }}"
     state: directory
     owner: root
     group: root
@@ -12,6 +12,8 @@
     - "{{ dhcpd_include_base_dir }}"
     - "{{ dhcpd_subnets_include_dir }}"
     - "{{ dhcpd_static_include_dir }}"
+  loop_control:
+    loop_var: dhcpd_include
   delegate_to: "{{ dhcpd_server }}"
   tags:
     - role::dhcpd

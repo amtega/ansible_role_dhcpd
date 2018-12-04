@@ -10,54 +10,58 @@
     - name: create configuration files for subnets
       template:
         src: subnet.template.j2
-        dest: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
+        dest: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
         owner: root
         group: root
         mode: 0644
         backup: no
-      when: item.state == 'present'
+      when: dhcpd_subnet.state == 'present'
       loop: "{{ dhcpd_subnet_addresses }}"
       register: dhcpd_configure_subnets_result
       loop_control:
-        label: "{{ item.subnet }} / {{ item.netmask }}"
+        loop_var: dhcpd_subnet
+        label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
 
     - name: remove configuration files for subnets marked as absent
       file:
-        path: "{{ dhcpd_subnets_include_dir }}/{{ item.subnet }}.conf"
+        path: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
         state: absent
-      when: item.state == 'absent'
+      when: dhcpd_subnet.state == 'absent'
       register: dhcpd_remove_absent_subnets_result
       loop: "{{ dhcpd_subnet_addresses }}"
       loop_control:
-        label: "{{ item.subnet}} / {{ item.netmask }}"
+        loop_var: dhcpd_subnet
+        label: "{{ dhcpd_subnet.subnet}} / {{ dhcpd_subnet.netmask }}"
 
     - name: create configuration files for static addresses
       template:
         src: static.template.j2
-        dest: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
+        dest: "{{ dhcpd_static_include_dir }}/{{ dhcpd_static.hostname }}.conf"
         owner: root
         group: root
         mode: 0644
         backup: no
-      when: item.state == 'present'
+      when: dhcpd_static.state == 'present'
       loop: "{{ dhcpd_static_addresses | default([]) }}"
       register: dhcpd_configure_static_result
       loop_control:
-        label: "{{ item.hostname }} / {{ item.mac }}"
+        loop_var: dhcpd_static
+        label: "{{ dhcpd_static.hostname }} / {{ dhcpd_static.mac }}"
 
     - name: remove configuration files for static addresses marked as absent
       file:
-        path: "{{ dhcpd_static_include_dir }}/{{ item.hostname }}.conf"
+        path: "{{ dhcpd_static_include_dir }}/{{ dhcpd_static.hostname }}.conf"
         state: absent
-      when: item.state == 'absent'
+      when: dhcpd_static.state == 'absent'
       loop: "{{ dhcpd_static_addresses | default([]) }}"
       register: dhcpd_remove_absent_static_result
       loop_control:
-        label: "{{ item.hostname}} / {{ item.mac }}"
+        loop_var: dhcpd_static
+        label: "{{ dhcpd_static.hostname}} / {{ dhcpd_static.mac }}"
 
     - name: search include files that already exists in dhcpd config dirs
       find:
-        paths: "{{ item }}"
+        paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
       when: >
         inventory_hostname == dhcpd_server
@@ -65,16 +69,18 @@
       loop:
         - "{{ dhcpd_subnets_include_dir }}"
         - "{{ dhcpd_static_include_dir }}"
+      loop_control:
+        loop_var: dhcpd_include
       register: search_includes_result
 
-    - name: delete unamanged include files
+    - name: delete unmanaged include files
       file:
-        path: "{{ item.path }}"
+        path: "{{ dhcpd_include.path }}"
         state: absent
       when: >
         inventory_hostname == dhcpd_server
         and dhcpd_delete_unmanaged
-        and item.path | default('') not in
+        and dhcpd_include.path | default('') not in
           dhcpd_subnet_addresses
             | selectattr('state', 'equalto', 'present')
             | map(attribute='subnet')
@@ -89,19 +95,24 @@
               | list
       loop: >-
         {{ search_includes_result.results
+          | reject("skipped")
+          | list
           | sum(attribute="files", start=[])
           | default([]) }}
       register: dhcpd_delete_unmanaged_result
       loop_control:
-        label: "{{ item.path }}"
+        loop_var: dhcpd_include
+        label: "{{ dhcpd_include.path }}"
 
     - name: search include files remaining in dhcpd config dirs
       find:
-        paths: "{{ item }}"
+        paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
       loop:
         - "{{ dhcpd_subnets_include_dir }}"
         - "{{ dhcpd_static_include_dir }}"
+      loop_control:
+        loop_var: dhcpd_include
       register: search_includes_result
 
     - name: setup fact with the final list of include files
@@ -123,11 +134,11 @@
         mode: 0644
         backup: no
       when:
-          dhcpd_configure_subnets_result | default({}) | changed
-            or dhcpd_remove_absent_subnets_result | default({}) | changed
-            or dhcpd_configure_static_result | default({}) | changed
-            or dhcpd_remove_absent_static_result | default({}) | changed
-            or dhcpd_delete_unmanaged_result | default({}) | changed
+          dhcpd_configure_subnets_result | default({}) is changed
+          or dhcpd_remove_absent_subnets_result | default({}) is changed
+          or dhcpd_configure_static_result | default({}) is changed
+          or dhcpd_remove_absent_static_result | default({}) is changed
+          or dhcpd_delete_unmanaged_result | default({}) is changed
       notify:
         - dhcpd restart
   delegate_to: "{{ dhcpd_server }}"
