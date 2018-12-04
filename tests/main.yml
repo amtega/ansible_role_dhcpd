@@ -271,6 +271,12 @@
         force: no
       notify:
         - dhcpd restart
+
+    - name: test dhcp-lease-list script
+      shell: dhcp-lease-list
+      register: check_dhcp_lease_list_result
+      changed_when: false
+      failed_when: check_dhcp_lease_list_result.stdout_lines | length > 3
   tags:
     - idempotence
 
