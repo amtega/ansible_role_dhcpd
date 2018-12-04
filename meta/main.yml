@@ -7,19 +7,31 @@ galaxy_info:
   description: Setup a dhcpd server that allows delegated host config
   company: AMTEGA - Xunta de Galicia
   license: GPLv3 or EUPL
-  min_ansible_version: 2.4
+  min_ansible_version: 2.7
   platforms:
-  - name: Fedora
-    versions:
-      - 25
-      - 26
-      - 27
-  - name: EL
-    versions:
-      - 6
-      - 7
+    - name: EL
+      versions:
+        - 6
+        - 7
+    - name: Fedora
+      versions:
+        - 27
+        - 28
   galaxy_tags:
     - system
     - dhcp
     - dhcpd
     - networking
+
+dependencies:
+  - role: amtega.check_platform
+    check_platform_distributions:
+      centos: 6
+      fedora: 27
+      rhel: 6
+
+  - role: amtega.packages
+    packages_os:
+      all:
+        all:
+          dhcp: present

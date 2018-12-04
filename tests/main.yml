@@ -1,10 +1,17 @@
 ---
 # Tasks for testing role
 
-- name: load docker presets
+- name: configure docker sandbox environment
   hosts: localhost
   roles:
     - role: amtega.docker_presets
+      docker_presets_images_json_query: >-
+        [? starts_with(name, `centos-6`)
+           || starts_with(name, `centos-7`)
+           || starts_with(name, `fedora-27`)
+           || starts_with(name, `fedora-28`) ]
+  tags:
+    - sandbox
 
 - name: setup facts with containers sets for dhcpd servers and clients
   hosts: localhost
@@ -16,6 +23,8 @@
           {{ docker_presets_containers
             | docker_presets_repeat(3)
             | docker_presets_randomize_names }}
+  tags:
+    - sandbox
 
 - name: setup sandbox for dhdcpd servers
   hosts: localhost
@@ -25,6 +34,8 @@
       docker_sandbox_state: started
       docker_sandbox_group: docker_sandbox_containers_servers
       docker_sandbox_idempotence_test: false
+  tags:
+    - sandbox
 
 - name: setup sandbox for dhdcpd clients
   hosts: localhost
@@ -35,7 +46,11 @@
       docker_sandbox_group: docker_sandbox_containers_clients
       docker_sandbox_cleanup_by_user: false
       docker_sandbox_cleanup_by_ppid: false
+      docker_sandbox_cleanup_by_playbook: false
+      docker_sandbox_cleanup_by_inventory: false
       docker_sandbox_idempotence_test: false
+  tags:
+    - sandbox
 
 - name: setup dhcpd servers config facts
   hosts: docker_sandbox_containers_servers
@@ -52,10 +67,11 @@
             netmask: "{{ eth0_config['netmask'] }}"
             state: present
 
-          - subnet: "192.168.13.0"
-            netmask: "255.255.255.0"
+          - subnet: 192.168.13.0
+            netmask: 255.255.255.0
             state: present
-            routers: "192.168.13.1"
+            routers:
+              - 192.168.13.1
             dns_servers:
              - 192.168.13.2
              - 192.168.13.3
@@ -64,12 +80,12 @@
             default_lease_time: 21600
             max_lease_time: 43200
             next_server: 192.168.13.13
-            filename: "pxelinux.0"
+            filename: pxelinux.0
 
-          - subnet: "192.168.14.0"
-            netmask: "255.255.255.0"
+          - subnet: 192.168.14.0
+            netmask: 255.255.255.0
             state: present
-            routers: "192.168.14.1"
+            routers: 192.168.14.1
             dns_servers:
              - 192.168.14.2
              - 192.168.14.3
@@ -78,12 +94,12 @@
             default_lease_time: 21600
             max_lease_time: 43200
             next_server: 192.168.14.13
-            filename: "pxelinux.0"
+            filename: pxelinux.0
 
-          - subnet: "192.168.15.0"
-            netmask: "255.255.255.0"
+          - subnet: 192.168.15.0
+            netmask: 255.255.255.0
             state: absent
-            routers: "192.168.15.1"
+            routers: 192.168.15.1
             dns_servers:
              - 192.168.15.2
              - 192.168.15.3
@@ -92,7 +108,7 @@
             default_lease_time: 21600
             max_lease_time: 43200
             next_server: 192.168.15.13
-            filename: "pxelinux.0"
+            filename: pxelinux.0
 
     - name: setup dhcpd servers static addresses config fact
       set_fact:
@@ -139,7 +155,7 @@
         owner: root
         group: root
         mode: 0755
-      with_items:
+      loop:
         - /etc/dhcp/dhserver.d/dhcpd.subnets.d
         - /etc/dhcp/dhserver.d/dhcpd.static.d
 
@@ -323,6 +339,9 @@
       docker_sandbox_state: absent
       docker_sandbox_cleanup_by_user: false
       docker_sandbox_cleanup_by_ppid: false
+  tags:
+    - cleanup
+    - sandbox
 
 - name: cleanup docker docker dhcpd clients sandbox
   hosts: localhost
@@ -332,3 +351,6 @@
       docker_sandbox_state: absent
       docker_sandbox_cleanup_by_user: false
       docker_sandbox_cleanup_by_ppid: false
+  tags:
+    - cleanup
+    - sandbox

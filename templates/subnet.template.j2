@@ -1,28 +1,28 @@
 {{ ansible_managed | comment }}
 
-subnet {{ item.subnet }} netmask {{ item.netmask }} {
-{% if item.routers is defined %}
-    option routers             {{ item.routers }};
+subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
+{% if dhcpd_subnet.routers is defined %}
+    option routers             {{ dhcpd_subnet.routers | join(", ") }};
 {% endif %}
-{% if item.dns_servers is defined %}
-    option domain-name-servers {{ item.dns_servers | join(", ") }};
+{% if dhcpd_subnet.dns_servers is defined %}
+    option domain-name-servers {{ dhcpd_subnet.dns_servers | join(", ") }};
 {% endif %}
-{% if item.netmask is defined %}
-    option subnet-mask         {{ item.netmask }};
+{% if dhcpd_subnet.netmask is defined %}
+    option subnet-mask         {{ dhcpd_subnet.netmask }};
 {% endif %}
-{% if item.range_start is defined %}
-    range dynamic-bootp        {{ item.range_start }} {{ item.range_end }};
+{% if dhcpd_subnet.range_start is defined %}
+    range dynamic-bootp        {{ dhcpd_subnet.range_start }} {{ dhcpd_subnet.range_end }};
 {% endif %}
-{% if item.default_lease_time is defined %}
-    default-lease-time         {{ item.default_lease_time }};
+{% if dhcpd_subnet.default_lease_time is defined %}
+    default-lease-time         {{ dhcpd_subnet.default_lease_time }};
 {% endif %}
-{% if item.max_lease_time is defined %}
-    max-lease-time             {{ item.max_lease_time }};
+{% if dhcpd_subnet.max_lease_time is defined %}
+    max-lease-time             {{ dhcpd_subnet.max_lease_time }};
 {% endif %}
-{% if item.filename is defined %}
-    filename                   "{{ item.filename }}";
+{% if dhcpd_subnet.filename is defined %}
+    filename                   "{{ dhcpd_subnet.filename }}";
 {% endif %}
-{% if item.next_server is defined %}
-    next-server                {{ item.next_server }};
+{% if dhcpd_subnet.next_server is defined %}
+    next-server                {{ dhcpd_subnet.next_server }};
 {% endif -%}
 }

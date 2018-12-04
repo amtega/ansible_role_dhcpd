@@ -1,6 +1,6 @@
 {{ ansible_managed | comment }}
 
-host {{ item.hostname }} {
-    hardware ethernet {{ item.mac }};
-    fixed-address {{ item.ipv4_address }};
+host {{ dhcpd_static.hostname }} {
+    hardware ethernet {{ dhcpd_static.mac }};
+    fixed-address {{ dhcpd_static.ipv4_address }};
 }
