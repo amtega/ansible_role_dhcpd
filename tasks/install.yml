@@ -1,20 +1,27 @@
 ---
 # Install tasks
 
-- name: create config directories
-  file:
-    path: "{{ dhcpd_include }}"
-    state: directory
-    owner: root
-    group: root
-    mode: 0755
-  loop:
-    - "{{ dhcpd_include_base_dir }}"
-    - "{{ dhcpd_subnets_include_dir }}"
-    - "{{ dhcpd_static_include_dir }}"
-  loop_control:
-    loop_var: dhcpd_include
-  delegate_to: "{{ dhcpd_server }}"
+- block:
+    - name: create config directories
+      file:
+        path: "{{ dhcpd_include }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      loop:
+        - "{{ dhcpd_include_base_dir }}"
+        - "{{ dhcpd_subnets_include_dir }}"
+        - "{{ dhcpd_static_include_dir }}"
+      loop_control:
+        loop_var: dhcpd_include
+      delegate_to: "{{ dhcpd_server }}"
+
+    - name: install dhcp-lease-list script
+      copy:
+        src: dhcp-lease-list
+        dest: /usr/bin
+        mode: 0755
   tags:
     - role::dhcpd
     - role::dhcpd::install
