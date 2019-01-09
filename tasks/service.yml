@@ -6,7 +6,6 @@
     name: dhcpd
     state: started
     enabled: yes
-  when: inventory_hostname == dhcpd_server
   tags:
     - role::dhcpd
     - role::dhcpd::service

@@ -1,6 +1,6 @@
 # Ansible dhcpd role
 
-This is an [Ansible](http://www.ansible.com) role to setup a dhcpd server that allows other hosts to add some configs to it.
+This is an [Ansible](http://www.ansible.com) role to setup a dhcpd server.
 
 ## Requirements
 
@@ -9,8 +9,6 @@ This is an [Ansible](http://www.ansible.com) role to setup a dhcpd server that a
 ## Role Variables
 
 A list of all the default variables for this role is available in `defaults/main.yml`.
-
-By default the role assumes that you want to setup a full dhcpd server, but if the `dhcpd_server` points to another host the role works as a dhcpd client that allows you to setup parameters on a remote dhcpd server, and therefore it will skip all stuff related to dhcpd package install and daemon config.
 
 ## Dependencies
 
@@ -26,7 +24,7 @@ This is an example playbook:
 - name: dhcpd sample
   hosts: localhost  
   vars:
-    dhcpd_subnet_addresses:
+    dhcpd_subnets:
       - subnet: 192.168.13.0
         netmask: 255.255.255.0
         routers:
@@ -55,7 +53,7 @@ This is an example playbook:
         next_server: 192.168.14.13
         filename: pxelinux.0
 
-    dhcpd_static_addresses:
+    dhcpd_hosts:
       - hostname: hostacme1
         mac: c5:6f:75:cc:00:01
         ipv4_address: 192.168.15.120

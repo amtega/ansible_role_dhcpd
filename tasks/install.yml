@@ -15,7 +15,6 @@
         - "{{ dhcpd_static_include_dir }}"
       loop_control:
         loop_var: dhcpd_include
-      delegate_to: "{{ dhcpd_server }}"
 
     - name: install dhcp-lease-list script
       copy:
