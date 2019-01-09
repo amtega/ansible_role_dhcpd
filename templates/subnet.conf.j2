@@ -1,6 +1,10 @@
 {{ ansible_managed | comment }}
 
 subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
+{% if dhcpd_subnet.range_start is defined
+   and dhcpd_subnet.range_end is defined %}
+  pool {
+{% endif %}
 {% if dhcpd_subnet.routers is defined %}
     option routers             {{ dhcpd_subnet.routers | join(", ") }};
 {% endif %}
@@ -24,5 +28,15 @@ subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
 {% endif %}
 {% if dhcpd_subnet.next_server is defined %}
     next-server                {{ dhcpd_subnet.next_server }};
-{% endif -%}
+{% endif %}
+{% if dhcpd_subnet.allow is defined %}
+    allow                      {{ dhcpd_subnet.allow }};
+{% endif %}
+{% if dhcpd_subnet.deny is defined %}
+    deny                       {{ dhcpd_subnet.deny }};
+{% endif %}
+{% if dhcpd_subnet.range_start is defined
+   and dhcpd_subnet.range_end is defined %}
+  }
+{% endif %}
 }

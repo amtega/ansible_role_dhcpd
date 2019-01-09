@@ -6,7 +6,6 @@
     name: dhcpd
     state: restarted
     enabled: yes
-  delegate_to: "{{ dhcpd_server }}"
   listen:
     - dhcpd restart
   tags:

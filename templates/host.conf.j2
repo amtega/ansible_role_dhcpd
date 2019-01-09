@@ -1,0 +1,10 @@
+{{ ansible_managed | comment }}
+
+host {{ dhcpd_static.hostname }} {
+{% if dhcpd_static.mac is defined %}
+  hardware ethernet {{ dhcpd_static.mac }};
+{% endif %}
+{% if dhcpd_static.ipv4_address is defined %}
+  fixed-address {{ dhcpd_static.ipv4_address }};
+{% endif %}
+}

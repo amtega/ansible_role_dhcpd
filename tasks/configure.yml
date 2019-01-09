@@ -5,22 +5,23 @@
     - name: disable unamanged files deletion if the role is called from a client
       set_fact:
         dhcpd_delete_unmanaged: false
-      when: inventory_hostname != dhcpd_server
 
     - name: create configuration files for subnets
       template:
-        src: subnet.template.j2
+        src: subnet.conf.j2
         dest: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
         owner: root
         group: root
         mode: 0644
         backup: no
       when: dhcpd_subnet.state == 'present'
-      loop: "{{ dhcpd_subnet_addresses }}"
+      loop: "{{ dhcpd_subnets }}"
       register: dhcpd_configure_subnets_result
       loop_control:
         loop_var: dhcpd_subnet
         label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
+      notify:
+        - dhcpd restart
 
     - name: remove configuration files for subnets marked as absent
       file:
@@ -28,44 +29,48 @@
         state: absent
       when: dhcpd_subnet.state == 'absent'
       register: dhcpd_remove_absent_subnets_result
-      loop: "{{ dhcpd_subnet_addresses }}"
+      loop: "{{ dhcpd_subnets }}"
       loop_control:
         loop_var: dhcpd_subnet
         label: "{{ dhcpd_subnet.subnet}} / {{ dhcpd_subnet.netmask }}"
+      notify:
+        - dhcpd restart
 
     - name: create configuration files for static addresses
       template:
-        src: static.template.j2
+        src: host.conf.j2
         dest: "{{ dhcpd_static_include_dir }}/{{ dhcpd_static.hostname }}.conf"
         owner: root
         group: root
         mode: 0644
         backup: no
       when: dhcpd_static.state == 'present'
-      loop: "{{ dhcpd_static_addresses | default([]) }}"
+      loop: "{{ dhcpd_hosts | default([]) }}"
       register: dhcpd_configure_static_result
       loop_control:
         loop_var: dhcpd_static
         label: "{{ dhcpd_static.hostname }} / {{ dhcpd_static.mac }}"
+      notify:
+        - dhcpd restart
 
     - name: remove configuration files for static addresses marked as absent
       file:
         path: "{{ dhcpd_static_include_dir }}/{{ dhcpd_static.hostname }}.conf"
         state: absent
       when: dhcpd_static.state == 'absent'
-      loop: "{{ dhcpd_static_addresses | default([]) }}"
+      loop: "{{ dhcpd_hosts | default([]) }}"
       register: dhcpd_remove_absent_static_result
       loop_control:
         loop_var: dhcpd_static
         label: "{{ dhcpd_static.hostname}} / {{ dhcpd_static.mac }}"
+      notify:
+        - dhcpd restart
 
     - name: search include files that already exists in dhcpd config dirs
       find:
         paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
-      when: >
-        inventory_hostname == dhcpd_server
-        and dhcpd_delete_unmanaged
+      when: dhcpd_delete_unmanaged
       loop:
         - "{{ dhcpd_subnets_include_dir }}"
         - "{{ dhcpd_static_include_dir }}"
@@ -77,17 +82,16 @@
       file:
         path: "{{ dhcpd_include.path }}"
         state: absent
-      when: >
-        inventory_hostname == dhcpd_server
-        and dhcpd_delete_unmanaged
+      when: >-
+        dhcpd_delete_unmanaged
         and dhcpd_include.path | default('') not in
-          dhcpd_subnet_addresses
+          dhcpd_subnets
             | selectattr('state', 'equalto', 'present')
             | map(attribute='subnet')
             | map('regex_replace', '^', dhcpd_subnets_include_dir + "/")
             | map('regex_replace', '$', '.conf')
             | list
-          + dhcpd_static_addresses
+          + dhcpd_hosts
               | selectattr('state', 'equalto', 'present')
               | map(attribute='hostname')
               | map('regex_replace', '^', dhcpd_static_include_dir + "/")
@@ -103,6 +107,8 @@
       loop_control:
         loop_var: dhcpd_include
         label: "{{ dhcpd_include.path }}"
+      notify:
+        - dhcpd restart
 
     - name: search include files remaining in dhcpd config dirs
       find:
@@ -127,7 +133,7 @@
 
     - name: create dhcpd main configuration file
       template:
-        src: dhcpd.template.j2
+        src: dhcpd.conf.j2
         dest: /etc/dhcp/dhcpd.conf
         owner: root
         group: root
@@ -141,7 +147,6 @@
           or dhcpd_delete_unmanaged_result | default({}) is changed
       notify:
         - dhcpd restart
-  delegate_to: "{{ dhcpd_server }}"
   tags:
     - role::dhcpd
     - role::dhcpd::configure

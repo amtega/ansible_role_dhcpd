@@ -13,56 +13,25 @@
   tags:
     - sandbox
 
-- name: setup facts with containers sets for dhcpd servers and clients
-  hosts: localhost
-  tasks:
-    - set_fact:
-        docker_sandbox_containers_servers: >-
-          {{ docker_presets_containers | docker_presets_randomize_names }}
-        docker_sandbox_containers_clients: >-
-          {{ docker_presets_containers
-            | docker_presets_repeat(3)
-            | docker_presets_randomize_names }}
-  tags:
-    - sandbox
-
-- name: setup sandbox for dhdcpd servers
+- name: run idempotence test
   hosts: localhost
   roles:
     - role: amtega.docker_sandbox
-      docker_sandbox_containers: "{{ docker_sandbox_containers_servers }}"
       docker_sandbox_state: started
-      docker_sandbox_group: docker_sandbox_containers_servers
-      docker_sandbox_idempotence_test: false
   tags:
     - sandbox
 
-- name: setup sandbox for dhdcpd clients
-  hosts: localhost
-  roles:
-    - role: amtega.docker_sandbox
-      docker_sandbox_containers: "{{ docker_sandbox_containers_clients }}"
-      docker_sandbox_state: started
-      docker_sandbox_group: docker_sandbox_containers_clients
-      docker_sandbox_cleanup_by_user: false
-      docker_sandbox_cleanup_by_ppid: false
-      docker_sandbox_cleanup_by_playbook: false
-      docker_sandbox_cleanup_by_inventory: false
-      docker_sandbox_idempotence_test: false
-  tags:
-    - sandbox
-
-- name: setup dhcpd servers config facts
-  hosts: docker_sandbox_containers_servers
+- name: setup testing environment
+  hosts: docker_sandbox_containers
   tasks:
     - name: setup a fact with dhcpd servers eth0 config
       set_fact:
         eth0_config: >-
           {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4'] }}
 
-    - name: setup dhcpd servers subnets config fact
+    - name: setup dhcpd servers subnets config
       set_fact:
-        dhcpd_subnet_addresses:
+        dhcpd_subnets:
           - subnet: "{{ eth0_config['network'] }}"
             netmask: "{{ eth0_config['netmask'] }}"
             state: present
@@ -112,9 +81,9 @@
             next_server: 192.168.15.13
             filename: pxelinux.0
 
-    - name: setup dhcpd servers static addresses config fact
+    - name: setup dhcpd servers static addresses
       set_fact:
-        dhcpd_static_addresses:
+        dhcpd_hosts:
          - hostname: hostacme1
            mac: c5:6f:75:cc:00:01
            ipv4_address: 192.168.15.121
@@ -130,26 +99,6 @@
            ipv4_address: 192.168.15.123
            state: absent
 
-  tags:
-    - idempotence
-
-- name: setup dhcpd clients config facts
-  hosts: docker_sandbox_containers_clients
-  tasks:
-    - name: setup dhcpd clients static addresses config fact
-      set_fact:
-        dhcpd_static_addresses:
-         - hostname: hostacme4
-           mac: c5:6f:75:cc:00:04
-           ipv4_address: 192.168.15.124
-           state: present
-
-  tags:
-    - idempotence
-
-- name: create some unamanaged files for later dhcpd servers testing
-  hosts: docker_sandbox_containers_servers
-  tasks:
     - name: create dhcpd servers testing required directories
       file:
         path: "{{ item }}"
@@ -161,13 +110,13 @@
         - /etc/dhcp/dhserver.d/dhcpd.subnets.d
         - /etc/dhcp/dhserver.d/dhcpd.static.d
 
-    - name: create dhcpd.subnets.d/test.conf file
+    - name: create unmanaged dhcpd.subnets.d/test.conf file
       copy:
         content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
         force: no
 
-    - name: create dhcpd.static.d/test.conf file
+    - name: create unmanaged dhcpd.static.d/test.conf file
       copy:
          content: ""
          dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
@@ -175,8 +124,8 @@
   tags:
     - idempotence
 
-- name: create some fake configuration files for later dhcpd servers testing
-  hosts: docker_sandbox_containers_servers
+- name: create some fake configuration files
+  hosts: docker_sandbox_containers
   tasks:
     - name: create dhcpd.subnets.d/192.168.15.0.conf file
       copy:
@@ -191,7 +140,7 @@
         force: no
 
 - name: test dhcpd server role with unamanged files deletion disabled
-  hosts: docker_sandbox_containers_servers
+  hosts: docker_sandbox_containers
   roles:
     - role: amtega.dhcpd
       dhcpd_delete_unmanaged: false
@@ -281,7 +230,7 @@
     - idempotence
 
 - name: test dhcpd server unamanged files deletion
-  hosts: docker_sandbox_containers_servers
+  hosts: docker_sandbox_containers
   roles:
     - role: amtega.dhcpd
       dhcpd_delete_unmanaged: true
@@ -302,63 +251,11 @@
           - not check_unamanaged1_result.stat.exists
           - not check_unamanaged2_result.stat.exists
 
-- name: setup dhcpd servers to test dhcp clients
-  hosts: docker_sandbox_containers_servers
-  roles:
-    - role: amtega.dhcpd
-      dhcpd_delete_unmanaged: false
-
-- name: point dhcpd clients config to servers
-  hosts: docker_sandbox_containers_clients
-  tasks:
-    - name: calculate random dhcpd server
-      set_fact:
-        dhcpd_random_server: >-
-          {{ groups['docker_sandbox_containers_servers'] | random }}
-
-    - name: point dhcpd_server fact to random dhcpd server
-      set_fact:
-        dhcpd_server: >-
-          {{ dhcpd_random_server }}
-
-- name: test dhcpd clients
-  hosts: docker_sandbox_containers_clients
-  roles:
-    - role: amtega.dhcpd
-  tags:
-    - idempotence
-  tasks:
-    - name: check dhcpd.static.d/hostacme4.conf file
-      stat:
-        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme4.conf"
-      register: check_client_static_result
-      delegate_to: "{{ dhcpd_server }}"
-
-    - name: check testing clients static addresses config files exist
-      assert:
-        that:
-          - check_client_static_result.stat.exists
-
-- name: cleanup docker docker dhcpd servers sandbox
+- name: cleanup docker sandbox
   hosts: localhost
   roles:
     - role: amtega.docker_sandbox
-      docker_sandbox_containers: "{{ docker_sandbox_containers_servers }}"
       docker_sandbox_state: absent
-      docker_sandbox_cleanup_by_user: false
-      docker_sandbox_cleanup_by_ppid: false
-  tags:
-    - cleanup
-    - sandbox
-
-- name: cleanup docker docker dhcpd clients sandbox
-  hosts: localhost
-  roles:
-    - role: amtega.docker_sandbox
-      docker_sandbox_containers: "{{ docker_sandbox_containers_clients }}"
-      docker_sandbox_state: absent
-      docker_sandbox_cleanup_by_user: false
-      docker_sandbox_cleanup_by_ppid: false
   tags:
     - cleanup
     - sandbox
