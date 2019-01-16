@@ -18,3 +18,9 @@
   tags:
     - role::dhcpd
     - role::dhcpd::service
+
+- name: upgrade from old versions
+  include_tasks: upgrade.yml
+  tags:
+    - role::dhcpd
+    - role::dhcpd::upgrade

@@ -1,0 +1,18 @@
+---
+# Migration tasks
+
+- block:
+    - name: delete old config directories created by older versions of the role
+      file:
+        path: "{{ dhcpd_old_dir }}"
+        state: absent
+        owner: root
+        group: root
+        mode: 0755
+      loop:
+        - "{{ dhcpd_include_base_dir }}/dhcpd.static.d"
+      loop_control:
+        loop_var: dhcpd_old_dir
+  tags:
+    - role::dhcpd
+    - role::dhcpd::uograde

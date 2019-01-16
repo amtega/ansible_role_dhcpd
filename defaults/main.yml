@@ -5,6 +5,7 @@
 # dhcpd.conf man page for details):
 #
 # {
+#   name: <name of the subnet for identification purposes>
 #   subnet: <dhcp network address in format a.b.c.d (mandatory)>
 #   netmask: <dhcp network mask in format a.b.c.d (mandatory)>
 #   state: <can be "present" or "absent">
@@ -23,6 +24,7 @@
 # Sample:
 #
 # {
+#   name: dhcp_subnet_0
 #   subnet: "192.168.13.0"
 #   netmask: "255.255.255.0"
 #   state: present
@@ -47,8 +49,9 @@ dhcpd_subnets: []
 # {
 #   hostname: <hostname (mandatory)>
 #   mac: <mac address>
-#   ipv4_address: <static ipv4 address>
+#   ipv4_address: <ipv4 address>
 #   state: <can be "present" or "absent">
+#   subnet: <name of the subnet where to include this host>
 # }
 #
 # Sample:
@@ -58,12 +61,13 @@ dhcpd_subnets: []
 #   mac: c5:6f:75:cc:00:01
 #   ipv4_address: 192.168.13.120
 #   state: present
+#   subnet: dhcp_subnet_0
 # }
 
 dhcpd_hosts: []
 
-# Delete unmanaged static config files if found. If true the role will delete
-# all files in the dhcpd_static_include_dir directory that are not part of the
+# Delete unmanaged host config files if found. If true the role will delete
+# all files in the dhcpd_hosts_include_dir directory that are not part of the
 # dhcpd_hosts variable. If you intend to setup some config files from
 # other hosts different from the dhcpd server itself is better to leave this
 # value in false

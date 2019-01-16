@@ -36,33 +36,33 @@
       notify:
         - dhcpd restart
 
-    - name: create configuration files for static addresses
+    - name: create configuration files for hosts
       template:
         src: host.conf.j2
-        dest: "{{ dhcpd_static_include_dir }}/{{ dhcpd_static.hostname }}.conf"
+        dest: "{{ dhcpd_hosts_include_dir }}/{{ dhcpd_host.hostname }}.conf"
         owner: root
         group: root
         mode: 0644
         backup: no
-      when: dhcpd_static.state == 'present'
+      when: dhcpd_host.state == 'present'
       loop: "{{ dhcpd_hosts | default([]) }}"
-      register: dhcpd_configure_static_result
+      register: dhcpd_configure_hosts_result
       loop_control:
-        loop_var: dhcpd_static
-        label: "{{ dhcpd_static.hostname }} / {{ dhcpd_static.mac }}"
+        loop_var: dhcpd_host
+        label: "{{ dhcpd_host.hostname }} / {{ dhcpd_host.mac }}"
       notify:
         - dhcpd restart
 
-    - name: remove configuration files for static addresses marked as absent
+    - name: remove configuration files for hosts marked as absent
       file:
-        path: "{{ dhcpd_static_include_dir }}/{{ dhcpd_static.hostname }}.conf"
+        path: "{{ dhcpd_hosts_include_dir }}/{{ dhcpd_host.hostname }}.conf"
         state: absent
-      when: dhcpd_static.state == 'absent'
+      when: dhcpd_host.state == 'absent'
       loop: "{{ dhcpd_hosts | default([]) }}"
-      register: dhcpd_remove_absent_static_result
+      register: dhcpd_remove_absent_hosts_result
       loop_control:
-        loop_var: dhcpd_static
-        label: "{{ dhcpd_static.hostname}} / {{ dhcpd_static.mac }}"
+        loop_var: dhcpd_host
+        label: "{{ dhcpd_host.hostname}} / {{ dhcpd_host.mac }}"
       notify:
         - dhcpd restart
 
@@ -73,7 +73,7 @@
       when: dhcpd_delete_unmanaged
       loop:
         - "{{ dhcpd_subnets_include_dir }}"
-        - "{{ dhcpd_static_include_dir }}"
+        - "{{ dhcpd_hosts_include_dir }}"
       loop_control:
         loop_var: dhcpd_include
       register: search_includes_result
@@ -94,7 +94,7 @@
           + dhcpd_hosts
               | selectattr('state', 'equalto', 'present')
               | map(attribute='hostname')
-              | map('regex_replace', '^', dhcpd_static_include_dir + "/")
+              | map('regex_replace', '^', dhcpd_hosts_include_dir + "/")
               | map('regex_replace', '$', '.conf')
               | list
       loop: >-
@@ -116,7 +116,7 @@
         patterns: "*.conf"
       loop:
         - "{{ dhcpd_subnets_include_dir }}"
-        - "{{ dhcpd_static_include_dir }}"
+        - "{{ dhcpd_hosts_include_dir }}"
       loop_control:
         loop_var: dhcpd_include
       register: search_includes_result
@@ -129,7 +129,19 @@
             | sum(start=[])
             | map(attribute="path")
             | list
-            | default([]) }}
+            | default([])
+            | difference(dhcpd_hosts_asigned) }}
+      vars:
+        dhcpd_hosts_asigned: >-
+          {{ dhcpd_hosts
+             | selectattr("subnet", "defined")
+             | map(attribute="hostname")
+             | map("regex_replace",
+                   "(.*)",
+                   dhcpd_hosts_include_dir
+                   + "/"
+                   + "\1.conf")
+             | list }}
 
     - name: create dhcpd main configuration file
       template:
@@ -139,12 +151,6 @@
         group: root
         mode: 0644
         backup: no
-      when:
-          dhcpd_configure_subnets_result | default({}) is changed
-          or dhcpd_remove_absent_subnets_result | default({}) is changed
-          or dhcpd_configure_static_result | default({}) is changed
-          or dhcpd_remove_absent_static_result | default({}) is changed
-          or dhcpd_delete_unmanaged_result | default({}) is changed
       notify:
         - dhcpd restart
   tags:
