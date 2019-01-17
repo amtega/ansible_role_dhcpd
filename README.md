@@ -25,7 +25,8 @@ This is an example playbook:
   hosts: localhost  
   vars:
     dhcpd_subnets:
-      - subnet: 192.168.13.0
+      - name: dhcp_subnet_0
+        subnet: 192.168.13.0
         netmask: 255.255.255.0
         routers:
           - 192.168.13.1
@@ -39,7 +40,8 @@ This is an example playbook:
         next_server: 192.168.13.13
         filename: pxelinux.0
 
-      - subnet: 192.168.14.0
+      - name: dhcp_subnet_1
+        subnet: 192.168.14.0
         netmask: 255.255.255.0
         routers:
           - 192.168.14.1
@@ -56,11 +58,13 @@ This is an example playbook:
     dhcpd_hosts:
       - hostname: hostacme1
         mac: c5:6f:75:cc:00:01
-        ipv4_address: 192.168.15.120
+        ipv4_address: 192.168.14.120
+        subnet: dhcp_subnet_1
 
       - hostname: hostacme2
         mac: c5:6f:75:cc:00:02
-        ipv4_address: 192.168.15.121
+        ipv4_address: 192.168.14.121
+        subnet: dhcp_subnet_1
   roles:
     - amtega.dhcpd
 ```
