@@ -32,11 +32,13 @@
     - name: setup dhcpd servers subnets config
       set_fact:
         dhcpd_subnets:
-          - subnet: "{{ eth0_config['network'] }}"
+          - name: subnet0
+            subnet: "{{ eth0_config['network'] }}"
             netmask: "{{ eth0_config['netmask'] }}"
             state: present
 
-          - subnet: 192.168.13.0
+          - name: subnet1
+            subnet: 192.168.13.0
             netmask: 255.255.255.0
             state: present
             routers:
@@ -51,7 +53,8 @@
             next_server: 192.168.13.13
             filename: pxelinux.0
 
-          - subnet: 192.168.14.0
+          - name: subnet2
+            subnet: 192.168.14.0
             netmask: 255.255.255.0
             state: present
             routers:
@@ -66,7 +69,8 @@
             next_server: 192.168.14.13
             filename: pxelinux.0
 
-          - subnet: 192.168.15.0
+          - name: subnet3
+            subnet: 192.168.15.0
             netmask: 255.255.255.0
             state: absent
             routers:
@@ -81,13 +85,14 @@
             next_server: 192.168.15.13
             filename: pxelinux.0
 
-    - name: setup dhcpd servers static addresses
+    - name: setup dhcpd servers hosts
       set_fact:
         dhcpd_hosts:
          - hostname: hostacme1
            mac: c5:6f:75:cc:00:01
            ipv4_address: 192.168.15.121
            state: present
+           subnet: subnet1
 
          - hostname: hostacme2
            mac: c5:6f:75:cc:00:02
@@ -108,7 +113,7 @@
         mode: 0755
       loop:
         - /etc/dhcp/dhserver.d/dhcpd.subnets.d
-        - /etc/dhcp/dhserver.d/dhcpd.static.d
+        - /etc/dhcp/dhserver.d/dhcpd.hosts.d
 
     - name: create unmanaged dhcpd.subnets.d/test.conf file
       copy:
@@ -116,10 +121,10 @@
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
         force: no
 
-    - name: create unmanaged dhcpd.static.d/test.conf file
+    - name: create unmanaged dhcpd.hosts.d/test.conf file
       copy:
          content: ""
-         dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
+         dest: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
          force: no
   tags:
     - idempotence
@@ -133,10 +138,10 @@
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
         force: no
 
-    - name: create dhcpd.static.d/hostacme3.conf file
+    - name: create dhcpd.hosts.d/hostacme3.conf file
       copy:
         content: ""
-        dest: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
+        dest: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
         force: no
 
 - name: test dhcpd server role with unamanged files deletion disabled
@@ -170,24 +175,24 @@
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf"
       register: check_subnet3_result
 
-    - name: check dhcpd.static.d/hostacme1.conf file
+    - name: check dhcpd.hosts.d/hostacme1.conf file
       stat:
-        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme1.conf"
-      register: check_static1_result
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme1.conf"
+      register: check_host1_result
 
-    - name: check dhcpd.static.d/hostacme2.conf file
+    - name: check dhcpd.hosts.d/hostacme2.conf file
       stat:
-        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme2.conf"
-      register: check_static2_result
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme2.conf"
+      register: check_host2_result
 
     - name: check absent dhcpd.subnets.d/192.168.15.0.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
       register: check_absent1_result
 
-    - name: check absent dhcpd.static.d/hostacme3.conf file
+    - name: check absent dhcpd.hosts.d/hostacme3.conf file
       stat:
-        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/hostacme3.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
       register: check_absent2_result
 
     - name: check unamanged dhcpd.subnets.d/test.conf file
@@ -195,9 +200,9 @@
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
       register: check_unamanaged1_result
 
-    - name: check unamanged dhcpd.static.d/test.conf file
+    - name: check unamanged dhcpd.hosts.d/test.conf file
       stat:
-        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
       register: check_unamanaged2_result
 
     - name: check testing subnets config files exist
@@ -206,8 +211,8 @@
           - check_subnet1_result.stat.exists
           - check_subnet2_result.stat.exists
           - check_subnet3_result.stat.exists
-          - check_static1_result.stat.exists
-          - check_static2_result.stat.exists
+          - check_host1_result.stat.exists
+          - check_host2_result.stat.exists
           - not check_absent1_result.stat.exists
           - not check_absent2_result.stat.exists
           - check_unamanaged1_result.stat.exists
@@ -240,9 +245,9 @@
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
       register: check_unamanaged1_result
 
-    - name: check unamanged dhcpd.static.d/test.conf file
+    - name: check unamanged dhcpd.hosts.d/test.conf file
       stat:
-        path: "/etc/dhcp/dhserver.d/dhcpd.static.d/test.conf"
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
       register: check_unamanaged2_result
 
     - name: check testing subnets config files exist
