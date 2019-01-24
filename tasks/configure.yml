@@ -32,7 +32,7 @@
       loop: "{{ dhcpd_subnets }}"
       loop_control:
         loop_var: dhcpd_subnet
-        label: "{{ dhcpd_subnet.subnet}} / {{ dhcpd_subnet.netmask }}"
+        label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
       notify:
         - dhcpd restart
 
@@ -62,7 +62,7 @@
       register: dhcpd_remove_absent_hosts_result
       loop_control:
         loop_var: dhcpd_host
-        label: "{{ dhcpd_host.hostname}} / {{ dhcpd_host.mac }}"
+        label: "{{ dhcpd_host.hostname }} / {{ dhcpd_host.mac }}"
       notify:
         - dhcpd restart
 
