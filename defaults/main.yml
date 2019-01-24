@@ -52,7 +52,6 @@ dhcpd_subnets: []
 #   mac: <mac address>
 #   ipv4_address: <ipv4 address>
 #   state: <can be "present" or "absent">
-#   subnet: <name of the subnet where to include this host>
 # }
 #
 # Sample:
@@ -62,7 +61,6 @@ dhcpd_subnets: []
 #   mac: c5:6f:75:cc:00:01
 #   ipv4_address: 192.168.13.120
 #   state: present
-#   subnet: dhcp_subnet_0
 # }
 
 dhcpd_hosts: []

@@ -59,12 +59,10 @@ This is an example playbook:
       - hostname: hostacme1
         mac: c5:6f:75:cc:00:01
         ipv4_address: 192.168.14.120
-        subnet: dhcp_subnet_1
 
       - hostname: hostacme2
         mac: c5:6f:75:cc:00:02
         ipv4_address: 192.168.14.121
-        subnet: dhcp_subnet_1
   roles:
     - amtega.dhcpd
 ```
