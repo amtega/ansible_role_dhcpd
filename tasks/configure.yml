@@ -129,19 +129,7 @@
             | sum(start=[])
             | map(attribute="path")
             | list
-            | default([])
-            | difference(dhcpd_hosts_asigned) }}
-      vars:
-        dhcpd_hosts_asigned: >-
-          {{ dhcpd_hosts
-             | selectattr("subnet", "defined")
-             | map(attribute="hostname")
-             | map("regex_replace",
-                   "(.*)",
-                   dhcpd_hosts_include_dir
-                   + "/"
-                   + "\1.conf")
-             | list }}
+            | default([]) }}
 
     - name: create dhcpd main configuration file
       template:

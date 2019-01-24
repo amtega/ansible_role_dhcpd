@@ -39,11 +39,4 @@ subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
    and dhcpd_subnet.range_end is defined %}
   }
 {% endif %}
-{% for host in dhcpd_hosts
-   | selectattr("subnet", "defined")
-   | selectattr("subnet", "equalto", dhcpd_subnet.name)
-   | selectattr("state", "defined")
-   | selectattr("state", "equalto", "present") %}
-  include "{{ dhcpd_hosts_include_dir }}/{{ host.hostname }}.conf";
-{% endfor %}
 }
