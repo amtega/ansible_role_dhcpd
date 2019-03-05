@@ -71,4 +71,4 @@ dhcpd_hosts: []
 # other hosts different from the dhcpd server itself is better to leave this
 # value in false
 
-dhcpd_delete_unmanaged: false
+dhcpd_delete_unmanaged: no
