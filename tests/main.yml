@@ -1,35 +1,37 @@
 ---
 # Tasks for testing role
 
-- name: configure docker sandbox environment
+- name: Configure docker sandbox environment
   hosts: localhost
   roles:
     - role: amtega.docker_presets
-      docker_presets_images_json_query: >-
-        [? starts_with(name, `centos-6`)
-           || starts_with(name, `centos-7`)
-           || starts_with(name, `fedora-27`)
-           || starts_with(name, `fedora-28`) ]
+      vars:
+        docker_presets_images_json_query: >-
+          [? starts_with(name, `centos-6`)
+             || starts_with(name, `centos-7`)
+             || starts_with(name, `fedora-29`)
+             || starts_with(name, `fedora-30`) ]
   tags:
     - sandbox
 
-- name: run idempotence test
+- name: Run idempotence test
   hosts: localhost
   roles:
     - role: amtega.docker_sandbox
-      docker_sandbox_state: started
+      vars:
+        docker_sandbox_state: started
   tags:
     - sandbox
 
-- name: setup testing environment
+- name: Setup testing environment
   hosts: docker_sandbox_containers
   tasks:
-    - name: setup a fact with dhcpd servers eth0 config
+    - name: Setup a fact with dhcpd servers eth0 config
       set_fact:
         eth0_config: >-
           {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4'] }}
 
-    - name: setup dhcpd servers subnets config
+    - name: Setup dhcpd servers subnets config
       set_fact:
         dhcpd_subnets:
           - name: subnet0
@@ -85,7 +87,7 @@
             next_server: 192.168.15.13
             filename: pxelinux.0
 
-    - name: setup dhcpd servers hosts
+    - name: Setup dhcpd servers hosts
       set_fact:
         dhcpd_hosts:
          - hostname: hostacme1
@@ -104,7 +106,7 @@
            ipv4_address: 192.168.15.123
            state: absent
 
-    - name: create dhcpd servers testing required directories
+    - name: Create dhcpd servers testing required directories
       file:
         path: "{{ item }}"
         state: directory
@@ -115,13 +117,13 @@
         - /etc/dhcp/dhserver.d/dhcpd.subnets.d
         - /etc/dhcp/dhserver.d/dhcpd.hosts.d
 
-    - name: create unmanaged dhcpd.subnets.d/test.conf file
+    - name: Create unmanaged dhcpd.subnets.d/test.conf file
       copy:
         content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
         force: no
 
-    - name: create unmanaged dhcpd.hosts.d/test.conf file
+    - name: Create unmanaged dhcpd.hosts.d/test.conf file
       copy:
          content: ""
          dest: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
@@ -129,7 +131,7 @@
   tags:
     - idempotence
 
-- name: create some fake configuration files
+- name: Create some fake configuration files
   hosts: docker_sandbox_containers
   tasks:
     - name: create dhcpd.subnets.d/192.168.15.0.conf file
@@ -144,19 +146,20 @@
         dest: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
         force: no
 
-- name: test dhcpd server role with unamanged files deletion disabled
+- name: Test dhcpd server role with unamanged files deletion disabled
   hosts: docker_sandbox_containers
   roles:
     - role: amtega.dhcpd
-      dhcpd_delete_unmanaged: false
+      vars:
+        dhcpd_delete_unmanaged: false
   tasks:
-    - name: check dhcpd server process is running
+    - name: Check dhcpd server process is running
       shell: ps aux | grep dhcpd | grep -v grep
       changed_when: false
       register: search_dhcpd_process_result
       failed_when: search_dhcpd_process_result.rc != 0
 
-    - name: check default network config file file
+    - name: Check default network config file file
       stat:
         path: >-
           {{ dhcpd_subnets_include_dir
@@ -165,47 +168,47 @@
             + ".conf" }}
       register: check_subnet1_result
 
-    - name: check dhcpd.subnets.d/192.168.13.0.conf file
+    - name: Check dhcpd.subnets.d/192.168.13.0.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf"
       register: check_subnet2_result
 
-    - name: check dhcpd.subnets.d/192.168.14.0.conf file
+    - name: Check dhcpd.subnets.d/192.168.14.0.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf"
       register: check_subnet3_result
 
-    - name: check dhcpd.hosts.d/hostacme1.conf file
+    - name: Check dhcpd.hosts.d/hostacme1.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme1.conf"
       register: check_host1_result
 
-    - name: check dhcpd.hosts.d/hostacme2.conf file
+    - name: Check dhcpd.hosts.d/hostacme2.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme2.conf"
       register: check_host2_result
 
-    - name: check absent dhcpd.subnets.d/192.168.15.0.conf file
+    - name: Check absent dhcpd.subnets.d/192.168.15.0.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
       register: check_absent1_result
 
-    - name: check absent dhcpd.hosts.d/hostacme3.conf file
+    - name: Check absent dhcpd.hosts.d/hostacme3.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
       register: check_absent2_result
 
-    - name: check unamanged dhcpd.subnets.d/test.conf file
+    - name: Check unamanged dhcpd.subnets.d/test.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
       register: check_unamanaged1_result
 
-    - name: check unamanged dhcpd.hosts.d/test.conf file
+    - name: Check unamanged dhcpd.hosts.d/test.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
       register: check_unamanaged2_result
 
-    - name: check testing subnets config files exist
+    - name: Check testing subnets config files exist
       assert:
         that:
           - check_subnet1_result.stat.exists
@@ -218,7 +221,7 @@
           - check_unamanaged1_result.stat.exists
           - check_unamanaged2_result.stat.exists
 
-    - name: test dhcpd server restart handler
+    - name: Test dhcpd server restart handler
       copy:
         content: ""
         dest: /tmp/emptyfile
@@ -226,7 +229,7 @@
       notify:
         - dhcpd restart
 
-    - name: test dhcp-lease-list script
+    - name: Test dhcp-lease-list script
       shell: dhcp-lease-list
       register: check_dhcp_lease_list_result
       changed_when: false
@@ -234,29 +237,30 @@
   tags:
     - idempotence
 
-- name: test dhcpd server unamanged files deletion
+- name: Test dhcpd server unamanged files deletion
   hosts: docker_sandbox_containers
   roles:
     - role: amtega.dhcpd
-      dhcpd_delete_unmanaged: true
+      vars:
+        dhcpd_delete_unmanaged: true
   tasks:
-    - name: check unamanged dhcpd.subnets.d/test.conf file
+    - name: Check unamanged dhcpd.subnets.d/test.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
       register: check_unamanaged1_result
 
-    - name: check unamanged dhcpd.hosts.d/test.conf file
+    - name: Check unamanged dhcpd.hosts.d/test.conf file
       stat:
         path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
       register: check_unamanaged2_result
 
-    - name: check testing subnets config files exist
+    - name: Check testing subnets config files exist
       assert:
         that:
           - not check_unamanaged1_result.stat.exists
           - not check_unamanaged2_result.stat.exists
 
-- name: cleanup docker sandbox
+- name: Cleanup docker sandbox
   hosts: localhost
   roles:
     - role: amtega.docker_sandbox

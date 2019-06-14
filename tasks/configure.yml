@@ -2,11 +2,11 @@
 # Configuration tasks
 
 - block:
-    - name: disable unamanged files deletion if the role is called from a client
+    - name: Disable unamanged files deletion if the role is called from a client
       set_fact:
         dhcpd_delete_unmanaged: false
 
-    - name: create configuration files for subnets
+    - name: Create configuration files for subnets
       template:
         src: subnet.conf.j2
         dest: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
@@ -23,7 +23,7 @@
       notify:
         - dhcpd restart
 
-    - name: remove configuration files for subnets marked as absent
+    - name: Remove configuration files for subnets marked as absent
       file:
         path: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
         state: absent
@@ -36,7 +36,7 @@
       notify:
         - dhcpd restart
 
-    - name: create configuration files for hosts
+    - name: Create configuration files for hosts
       template:
         src: host.conf.j2
         dest: "{{ dhcpd_hosts_include_dir }}/{{ dhcpd_host.hostname }}.conf"
@@ -53,7 +53,7 @@
       notify:
         - dhcpd restart
 
-    - name: remove configuration files for hosts marked as absent
+    - name: Remove configuration files for hosts marked as absent
       file:
         path: "{{ dhcpd_hosts_include_dir }}/{{ dhcpd_host.hostname }}.conf"
         state: absent
@@ -66,11 +66,11 @@
       notify:
         - dhcpd restart
 
-    - name: search include files that already exists in dhcpd config dirs
+    - name: Search include files that already exists in dhcpd config dirs
       find:
         paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
-      when: dhcpd_delete_unmanaged
+      when: dhcpd_delete_unmanaged | bool
       loop:
         - "{{ dhcpd_subnets_include_dir }}"
         - "{{ dhcpd_hosts_include_dir }}"
@@ -78,12 +78,12 @@
         loop_var: dhcpd_include
       register: search_includes_result
 
-    - name: delete unmanaged include files
+    - name: Delete unmanaged include files
       file:
         path: "{{ dhcpd_include.path }}"
         state: absent
       when: >-
-        dhcpd_delete_unmanaged
+        dhcpd_delete_unmanaged | bool
         and dhcpd_include.path | default('') not in
           dhcpd_subnets
             | selectattr('state', 'equalto', 'present')
@@ -110,7 +110,7 @@
       notify:
         - dhcpd restart
 
-    - name: search include files remaining in dhcpd config dirs
+    - name: Search include files remaining in dhcpd config dirs
       find:
         paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
@@ -121,7 +121,7 @@
         loop_var: dhcpd_include
       register: search_includes_result
 
-    - name: setup fact with the final list of include files
+    - name: Setup fact with the final list of include files
       set_fact:
         dhcpd_include_files: >-
           {{ search_includes_result.results
@@ -131,7 +131,7 @@
             | list
             | default([]) }}
 
-    - name: create dhcpd main configuration file
+    - name: Create dhcpd main configuration file
       template:
         src: dhcpd.conf.j2
         dest: /etc/dhcp/dhcpd.conf

@@ -2,7 +2,7 @@
 # Install tasks
 
 - block:
-    - name: create config directories
+    - name: Create config directories
       file:
         path: "{{ dhcpd_include }}"
         state: directory
@@ -16,7 +16,7 @@
       loop_control:
         loop_var: dhcpd_include
 
-    - name: install dhcp-lease-list script
+    - name: Install dhcp-lease-list script
       copy:
         src: dhcp-lease-list
         dest: /usr/bin

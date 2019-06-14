@@ -2,7 +2,7 @@
 # Migration tasks
 
 - block:
-    - name: delete old config directories created by older versions of the role
+    - name: Delete old config directories created by older versions of the role
       file:
         path: "{{ dhcpd_old_dir }}"
         state: absent

@@ -1,7 +1,7 @@
 ---
 # Service tasks
 
-- name: enable and start dhcpd service
+- name: Enable and start dhcpd service
   service:
     name: dhcpd
     state: started
