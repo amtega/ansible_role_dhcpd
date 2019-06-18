@@ -2,10 +2,6 @@
 # Configuration tasks
 
 - block:
-    - name: Disable unamanged files deletion if the role is called from a client
-      set_fact:
-        dhcpd_delete_unmanaged: false
-
     - name: Create configuration files for subnets
       template:
         src: subnet.conf.j2

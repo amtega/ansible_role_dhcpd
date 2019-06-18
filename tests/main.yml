@@ -151,11 +151,11 @@
   roles:
     - role: amtega.dhcpd
       vars:
-        dhcpd_delete_unmanaged: false
+        dhcpd_delete_unmanaged: no
   tasks:
     - name: Check dhcpd server process is running
       shell: ps aux | grep dhcpd | grep -v grep
-      changed_when: false
+      changed_when: no
       register: search_dhcpd_process_result
       failed_when: search_dhcpd_process_result.rc != 0
 
@@ -232,7 +232,7 @@
     - name: Test dhcp-lease-list script
       shell: dhcp-lease-list
       register: check_dhcp_lease_list_result
-      changed_when: false
+      changed_when: no
       failed_when: check_dhcp_lease_list_result.stdout_lines | length > 3
   tags:
     - idempotence
@@ -242,7 +242,7 @@
   roles:
     - role: amtega.dhcpd
       vars:
-        dhcpd_delete_unmanaged: true
+        dhcpd_delete_unmanaged: yes
   tasks:
     - name: Check unamanged dhcpd.subnets.d/test.conf file
       stat:
@@ -264,7 +264,8 @@
   hosts: localhost
   roles:
     - role: amtega.docker_sandbox
-      docker_sandbox_state: absent
+      vars:
+        docker_sandbox_state: absent
   tags:
     - cleanup
     - sandbox
