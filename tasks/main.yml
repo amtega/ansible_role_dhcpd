@@ -1,25 +1,25 @@
 ---
 # Role tasks
 
-- name: install dhcpd
+- name: Install dhcpd
   include_tasks: install.yml
   tags:
     - role::dhcpd
     - role::dhcpd::install
 
-- name: configure dhcpd
+- name: Configure dhcpd
   include_tasks: configure.yml
   tags:
     - role::dhcpd
     - role::dhcpd::configure
 
-- name: setup dhcpd service
+- name: Setup dhcpd service
   include_tasks: service.yml
   tags:
     - role::dhcpd
     - role::dhcpd::service
 
-- name: upgrade from old versions
+- name: Upgrade from old versions
   include_tasks: upgrade.yml
   tags:
     - role::dhcpd
