@@ -30,6 +30,7 @@ dependencies:
         centos: 6
         fedora: 29
         rhel: 6
+    when: not dhcpd_deps_resolved | default(false)
 
   - role: amtega.packages
     vars:
@@ -37,3 +38,4 @@ dependencies:
         all:
           all:
             dhcp: present
+    when: not dhcpd_deps_resolved | default(false)
