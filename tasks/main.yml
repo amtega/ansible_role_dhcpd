@@ -1,6 +1,12 @@
 ---
 # Role tasks
 
+- name: Setup fact to optimize further runs
+  set_fact:
+    dhcpd_deps_resolved: yes
+  tags:
+    - role::dhcpd
+
 - name: Install dhcpd
   include_tasks: install.yml
   tags:
