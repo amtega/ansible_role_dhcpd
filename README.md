@@ -12,8 +12,7 @@ This is an example playbook:
 
 ```yaml
 ---
-- name: dhcpd sample
-  hosts: localhost  
+- hosts: localhost  
   vars:
     dhcpd_subnets:
       - name: dhcp_subnet_0

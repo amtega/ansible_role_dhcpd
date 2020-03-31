@@ -134,13 +134,13 @@
 - name: Create some fake configuration files
   hosts: docker_sandbox_containers
   tasks:
-    - name: create dhcpd.subnets.d/192.168.15.0.conf file
+    - name: Create dhcpd.subnets.d/192.168.15.0.conf file
       copy:
         content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
         force: no
 
-    - name: create dhcpd.hosts.d/hostacme3.conf file
+    - name: Create dhcpd.hosts.d/hostacme3.conf file
       copy:
         content: ""
         dest: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
