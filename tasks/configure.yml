@@ -2,35 +2,39 @@
 # Configuration tasks
 
 - block:
-    - name: Create configuration files for subnets
-      template:
-        src: subnet.conf.j2
-        dest: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
-        owner: root
-        group: root
-        mode: 0644
-        backup: no
-      when: dhcpd_subnet.state == 'present'
-      loop: "{{ dhcpd_subnets }}"
-      register: dhcpd_configure_subnets_result
-      loop_control:
-        loop_var: dhcpd_subnet
-        label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
-      notify:
-        - dhcpd restart
+    - when: not dhcpd_hosts_only | bool
+      block:
+        - name: Create configuration files for subnets
+          template:
+            src: subnet.conf.j2
+            dest: >-
+              {{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf
+            owner: root
+            group: root
+            mode: 0644
+            backup: no
+          when: dhcpd_subnet.state == 'present'
+          loop: "{{ dhcpd_subnets }}"
+          register: dhcpd_configure_subnets_result
+          loop_control:
+            loop_var: dhcpd_subnet
+            label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
+          notify:
+            - dhcpd restart
 
-    - name: Remove configuration files for subnets marked as absent
-      file:
-        path: "{{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf"
-        state: absent
-      when: dhcpd_subnet.state == 'absent'
-      register: dhcpd_remove_absent_subnets_result
-      loop: "{{ dhcpd_subnets }}"
-      loop_control:
-        loop_var: dhcpd_subnet
-        label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
-      notify:
-        - dhcpd restart
+        - name: Remove configuration files for subnets marked as absent
+          file:
+            path: >-
+              {{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf
+            state: absent
+          when: dhcpd_subnet.state == 'absent'
+          register: dhcpd_remove_absent_subnets_result
+          loop: "{{ dhcpd_subnets }}"
+          loop_control:
+            loop_var: dhcpd_subnet
+            label: "{{ dhcpd_subnet.subnet }} / {{ dhcpd_subnet.netmask }}"
+          notify:
+            - dhcpd restart
 
     - name: Create configuration files for hosts
       template:

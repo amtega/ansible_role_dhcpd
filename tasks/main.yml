@@ -9,6 +9,7 @@
 
 - name: Install dhcpd
   include_tasks: install.yml
+  when: not dhcpd_hosts_only | bool
   tags:
     - role::dhcpd
     - role::dhcpd::install
@@ -21,12 +22,14 @@
 
 - name: Setup dhcpd service
   include_tasks: service.yml
+  when: not dhcpd_hosts_only | bool
   tags:
     - role::dhcpd
     - role::dhcpd::service
 
 - name: Upgrade from old versions
   include_tasks: upgrade.yml
+  when: not dhcpd_hosts_only | bool
   tags:
     - role::dhcpd
     - role::dhcpd::upgrade

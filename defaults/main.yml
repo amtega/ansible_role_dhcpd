@@ -72,3 +72,9 @@ dhcpd_hosts: []
 # value in false
 
 dhcpd_delete_unmanaged: no
+
+# Tells the role to run only the hosts configuration related tasks, assuming
+# that the server was previously configured in other role run. This is useful
+# when you want to reduce role processing time when adding hosts only
+
+dhcpd_hosts_only: no
