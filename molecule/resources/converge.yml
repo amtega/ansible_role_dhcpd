@@ -82,5 +82,6 @@
         content: ""
         dest: /tmp/emptyfile
         force: no
+        mode: 0755
       notify:
         - dhcpd restart
