@@ -1,0 +1,49 @@
+---
+
+- name: Prepare
+  hosts: molecule_hosts
+  gather_facts: yes
+  tasks:
+    - name: Setup required packages
+      package:
+        name: "{{ ps_package }}"
+        state: present
+      vars:
+        ps_package: >-
+          {{ (ansible_facts.distribution_major_version is version("7", ">="))
+             | ternary("procps-ng", "procps") }}
+
+    - name: Create dhcpd servers testing required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      loop:
+        - /etc/dhcp/dhserver.d/dhcpd.subnets.d
+        - /etc/dhcp/dhserver.d/dhcpd.hosts.d
+
+    - name: Create unmanaged dhcpd.subnets.d/test.conf file
+      copy:
+        content: ""
+        dest: /etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf
+        force: no
+
+    - name: Create unmanaged dhcpd.hosts.d/test.conf file
+      copy:
+         content: ""
+         dest: /etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf
+         force: no
+
+    - name: Create dhcpd.subnets.d/192.168.15.0.conf file
+      copy:
+        content: ""
+        dest: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
+        force: no
+
+    - name: Create dhcpd.hosts.d/hostacme3.conf file
+      copy:
+        content: ""
+        dest: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
+        force: no

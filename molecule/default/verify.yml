@@ -1,0 +1,78 @@
+---
+
+- name: Verify
+  hosts: molecule_hosts
+  gather_facts: yes
+  tasks:
+    - name: Check dhcpd server process is running
+      shell: ps aux | grep dhcpd | grep -v grep
+      changed_when: no
+      register: search_dhcpd_process_result
+      failed_when: search_dhcpd_process_result.rc != 0
+
+    - name: Check default network config file file
+      stat:
+        path: >-
+          {{ "/etc/dhcp/dhserver.d/dhcpd.subnets.d/"
+            + ansible_facts.default_ipv4.network
+            + ".conf" }}
+      register: check_subnet1_result
+
+    - name: Check dhcpd.subnets.d/192.168.13.0.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.13.0.conf"
+      register: check_subnet2_result
+
+    - name: Check dhcpd.subnets.d/192.168.14.0.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.14.0.conf"
+      register: check_subnet3_result
+
+    - name: Check dhcpd.hosts.d/hostacme1.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme1.conf"
+      register: check_host1_result
+
+    - name: Check dhcpd.hosts.d/hostacme2.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme2.conf"
+      register: check_host2_result
+
+    - name: Check absent dhcpd.subnets.d/192.168.15.0.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/192.168.15.0.conf"
+      register: check_absent1_result
+
+    - name: Check absent dhcpd.hosts.d/hostacme3.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/hostacme3.conf"
+      register: check_absent2_result
+
+    - name: Check unamanged dhcpd.subnets.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
+      register: check_unamanaged1_result
+
+    - name: Check unamanged dhcpd.hosts.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
+      register: check_unamanaged2_result
+
+    - name: Check testing subnets config files exist
+      assert:
+        that:
+          - check_subnet1_result.stat.exists
+          - check_subnet2_result.stat.exists
+          - check_subnet3_result.stat.exists
+          - check_host1_result.stat.exists
+          - check_host2_result.stat.exists
+          - not check_absent1_result.stat.exists
+          - not check_absent2_result.stat.exists
+          - check_unamanaged1_result.stat.exists
+          - check_unamanaged2_result.stat.exists
+
+    - name: Check dhcp-lease-list script
+      shell: dhcp-lease-list
+      register: check_dhcp_lease_list_result
+      changed_when: no
+      failed_when: check_dhcp_lease_list_result.stdout_lines | length > 3

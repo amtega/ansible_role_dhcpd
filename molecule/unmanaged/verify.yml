@@ -1,0 +1,21 @@
+---
+
+- name: Verify
+  hosts: molecule_hosts
+  gather_facts: no
+  tasks:
+    - name: Check unamanged dhcpd.subnets.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.subnets.d/test.conf"
+      register: check_unamanaged1_result
+
+    - name: Check unamanged dhcpd.hosts.d/test.conf file
+      stat:
+        path: "/etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf"
+      register: check_unamanaged2_result
+
+    - name: Check testing subnets config files exist
+      assert:
+        that:
+          - not check_unamanaged1_result.stat.exists
+          - not check_unamanaged2_result.stat.exists
