@@ -61,21 +61,21 @@
             filename: pxelinux.0
 
         dhcpd_hosts:
-         - hostname: hostacme1
-           mac: c5:6f:75:cc:00:01
-           ipv4_address: 192.168.15.121
-           state: present
-           subnet: subnet1
+          - hostname: hostacme1
+            mac: c5:6f:75:cc:00:01
+            ipv4_address: 192.168.15.121
+            state: present
+            subnet: subnet1
 
-         - hostname: hostacme2
-           mac: c5:6f:75:cc:00:02
-           ipv4_address: 192.168.15.122
-           state: present
+          - hostname: hostacme2
+            mac: c5:6f:75:cc:00:02
+            ipv4_address: 192.168.15.122
+            state: present
 
-         - hostname: hostacme3
-           mac: c5:6f:75:cc:00:03
-           ipv4_address: 192.168.15.123
-           state: absent
+          - hostname: hostacme3
+            mac: c5:6f:75:cc:00:03
+            ipv4_address: 192.168.15.123
+            state: absent
   tasks:
     - name: Test dhcpd server restart handler
       copy:
