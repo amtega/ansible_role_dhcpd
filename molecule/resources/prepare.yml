@@ -33,10 +33,10 @@
 
     - name: Create unmanaged dhcpd.hosts.d/test.conf file
       copy:
-         content: ""
-         dest: /etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf
-         force: no
-         mode: 0755
+        content: ""
+        dest: /etc/dhcp/dhserver.d/dhcpd.hosts.d/test.conf
+        force: no
+        mode: 0755
 
     - name: Create dhcpd.subnets.d/192.168.15.0.conf file
       copy:

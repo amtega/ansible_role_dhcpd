@@ -17,8 +17,8 @@ galaxy_info:
         - 8
     - name: Fedora
       versions:
-        - 33
         - 34
+        - 35
   galaxy_tags:
     - system
     - dhcp
@@ -45,9 +45,9 @@ dependencies:
           8:
             dhcp-server: present
         fedora:
-          33:
-            dhcp-server: present
           34:
+            dhcp-server: present
+          35:
             dhcp-server: present
         redhat:
           6:
