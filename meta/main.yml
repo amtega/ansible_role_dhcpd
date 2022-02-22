@@ -37,7 +37,7 @@ dependencies:
   - role: amtega.packages
     vars:
       packages_os:
-        centos:
+        all:
           6:
             dhcp: present
           7:
@@ -45,15 +45,7 @@ dependencies:
           8:
             dhcp-server: present
         fedora:
-          34:
+          all:
             dhcp-server: present
-          35:
-            dhcp-server: present
-        redhat:
-          6:
-            dhcp: present
-          7:
-            dhcp: present
-          8:
-            dhcp-server: present
+
     when: not dhcpd_deps_resolved | default(false)
