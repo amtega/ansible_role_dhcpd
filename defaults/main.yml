@@ -11,8 +11,9 @@
 #   state: <can be "present" or "absent">
 #   routers: <list of network routers in format a.b.c.d>
 #   dns_servers: <list of dhcp DNS servers in format a.b.c.d>
-#   range_start: <dhcp range start in format a.b.c.d>
-#   range_end: <dhcp range end in format a.b.c.d>
+#   ranges: <list of dicts with ip ranges>
+#     - start: <dhcp range start in format a.b.c.d>
+#       end: <dhcp range end in format a.b.c.d>
 #   default_lease_time: <seconds>
 #   max_lease_time: <seconds>
 #   next_server: <server from which the initial boot file is to be loaded>
@@ -33,8 +34,9 @@
 #   dns_servers:
 #     - 192.168.13.2
 #     - 192.168.13.3
-#   range_start: 192.168.13.100
-#   range_end: 192.168.13.120
+#   ranges:
+#     - start: 192.168.13.100
+#       end: 192.168.13.120
 #   default_lease_time: 21600
 #   max_lease_time: 43200
 #   next_server: 192.168.13.13
