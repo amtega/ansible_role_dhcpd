@@ -1,8 +1,7 @@
 {{ ansible_managed | comment }}
 
 subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
-{% if dhcpd_subnet.range_start is defined
-   and dhcpd_subnet.range_end is defined %}
+{% if dhcpd_subnet.ranges | default([]) | length > 0 %}
   pool {
 {% endif %}
 {% if dhcpd_subnet.routers is defined %}
@@ -14,9 +13,9 @@ subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
 {% if dhcpd_subnet.netmask is defined %}
     option subnet-mask         {{ dhcpd_subnet.netmask }};
 {% endif %}
-{% if dhcpd_subnet.range_start is defined %}
-    range dynamic-bootp        {{ dhcpd_subnet.range_start }} {{ dhcpd_subnet.range_end }};
-{% endif %}
+{% for range in dhcpd_subnet.ranges | default([]) %}
+    range dynamic-bootp        {{ range.start }} {{ range.end }};
+{% endfor %}
 {% if dhcpd_subnet.default_lease_time is defined %}
     default-lease-time         {{ dhcpd_subnet.default_lease_time }};
 {% endif %}
@@ -35,8 +34,7 @@ subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
 {% if dhcpd_subnet.deny is defined %}
     deny                       {{ dhcpd_subnet.deny }};
 {% endif %}
-{% if dhcpd_subnet.range_start is defined
-   and dhcpd_subnet.range_end is defined %}
+{% if dhcpd_subnet.ranges | default([]) | length > 0 %}
   }
 {% endif %}
 }
