@@ -1,9 +1,10 @@
 ---
-# Migration tasks
+# Upgrade tasks
 
-- block:
+- name: Upgrade dhcpd
+  block:
     - name: Delete old config directories created by older versions of the role
-      file:
+      ansible.builtin.file:
         path: "{{ dhcpd_old_dir }}"
         state: absent
         owner: root

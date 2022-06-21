@@ -11,6 +11,7 @@
 #   state: <can be "present" or "absent">
 #   routers: <list of network routers in format a.b.c.d>
 #   dns_servers: <list of dhcp DNS servers in format a.b.c.d>
+#   dns_domain: <dns domain>
 #   ranges: <list of dicts with ip ranges>
 #     - start: <dhcp range start in format a.b.c.d>
 #       end: <dhcp range end in format a.b.c.d>
@@ -34,6 +35,7 @@
 #   dns_servers:
 #     - 192.168.13.2
 #     - 192.168.13.3
+#   dns_domain: acme.com
 #   ranges:
 #     - start: 192.168.13.100
 #       end: 192.168.13.120

@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2022-06-21
+### Added
+- Added support for dns name. Related to ansible/playbooks/ansible_workstation#16
+
+### Fixed
+- Coding standards.
+
 ## [1.9.0] - 2022-03-29
 ### Added
 - Added support for multiple ranges. Related to ansible/playbooks/linux#78
