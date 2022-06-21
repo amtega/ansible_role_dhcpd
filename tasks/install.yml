@@ -1,9 +1,10 @@
 ---
 # Install tasks
 
-- block:
+- name: Install dhcpd
+  block:
     - name: Create config directories
-      file:
+      ansible.builtin.file:
         path: "{{ dhcpd_include }}"
         state: directory
         owner: root
@@ -17,7 +18,7 @@
         loop_var: dhcpd_include
 
     - name: Install dhcp-lease-list script
-      copy:
+      ansible.builtin.copy:
         src: dhcp-lease-list
         dest: /usr/bin
         mode: 0755

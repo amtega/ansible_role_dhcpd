@@ -10,6 +10,9 @@ subnet {{ dhcpd_subnet.subnet }} netmask {{ dhcpd_subnet.netmask }} {
 {% if dhcpd_subnet.dns_servers is defined %}
     option domain-name-servers {{ dhcpd_subnet.dns_servers | join(", ") }};
 {% endif %}
+{% if dhcpd_subnet.dns_domain is defined %}
+    option domain-name         "{{ dhcpd_subnet.dns_domain }}";
+{% endif %}
 {% if dhcpd_subnet.netmask is defined %}
     option subnet-mask         {{ dhcpd_subnet.netmask }};
 {% endif %}

@@ -2,7 +2,7 @@
 # Service tasks
 
 - name: Enable and start dhcpd service
-  service:
+  ansible.builtin.service:
     name: dhcpd
     state: started
     enabled: yes

@@ -81,7 +81,7 @@
             state: absent
   tasks:
     - name: Test dhcpd server restart handler
-      copy:
+      ansible.builtin.copy:
         content: ""
         dest: /tmp/emptyfile
         force: no

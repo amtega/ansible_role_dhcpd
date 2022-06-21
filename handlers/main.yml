@@ -2,7 +2,7 @@
 # Role handlers
 
 - name: Dhcpd restart service
-  service:
+  ansible.builtin.service:
     name: dhcpd
     state: restarted
     enabled: yes
