@@ -1,11 +1,13 @@
 ---
 # Configuration tasks
 
-- block:
-    - when: not dhcpd_hosts_only | bool
+- name: Configure dhcpd
+  block:
+    - name: Setup subnets
+      when: not dhcpd_hosts_only | bool
       block:
         - name: Create configuration files for subnets
-          template:
+          ansible.builtin.template:            
             src: subnet.conf.j2
             dest: >-
               {{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf
@@ -23,7 +25,7 @@
             - dhcpd restart
 
         - name: Remove configuration files for subnets marked as absent
-          file:
+          ansible.builtin.file:
             path: >-
               {{ dhcpd_subnets_include_dir }}/{{ dhcpd_subnet.subnet }}.conf
             state: absent
@@ -37,7 +39,7 @@
             - dhcpd restart
 
     - name: Create configuration files for hosts
-      template:
+      ansible.builtin.template:
         src: host.conf.j2
         dest: "{{ dhcpd_hosts_include_dir }}/{{ dhcpd_host.hostname }}.conf"
         owner: root
@@ -54,7 +56,7 @@
         - dhcpd restart
 
     - name: Remove configuration files for hosts marked as absent
-      file:
+      ansible.builtin.file:
         path: "{{ dhcpd_hosts_include_dir }}/{{ dhcpd_host.hostname }}.conf"
         state: absent
       when: dhcpd_host.state == 'absent'
@@ -67,7 +69,7 @@
         - dhcpd restart
 
     - name: Search include files that already exists in dhcpd config dirs
-      find:
+      ansible.builtin.find:
         paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
       when: dhcpd_delete_unmanaged | bool
@@ -79,7 +81,7 @@
       register: search_includes_result
 
     - name: Delete unmanaged include files
-      file:
+      ansible.builtin.file:
         path: "{{ dhcpd_include.path }}"
         state: absent
       when: >-
@@ -111,7 +113,7 @@
         - dhcpd restart
 
     - name: Search include files remaining in dhcpd config dirs
-      find:
+      ansible.builtin.find:
         paths: "{{ dhcpd_include }}"
         patterns: "*.conf"
       loop:
@@ -122,7 +124,7 @@
       register: search_includes_result
 
     - name: Setup fact with the final list of include files
-      set_fact:
+      ansible.builtin.set_fact:
         dhcpd_include_files: >-
           {{ search_includes_result.results
             | map(attribute="files")
@@ -132,7 +134,7 @@
             | default([]) }}
 
     - name: Create dhcpd main configuration file
-      template:
+      ansible.builtin.template:
         src: dhcpd.conf.j2
         dest: /etc/dhcp/dhcpd.conf
         owner: root
